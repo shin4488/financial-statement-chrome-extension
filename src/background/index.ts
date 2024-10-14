@@ -9,11 +9,18 @@ store.subscribe(() => {
   // console.log('state', state);
 });
 
-// show welcome page on new install
-browser.runtime.onInstalled.addListener(async (details) => {
-  if (details.reason === 'install') {
-    //show the welcome page
-    const url = browser.runtime.getURL('welcome/welcome.html');
-    await browser.tabs.create({ url });
+browser.tabs.onActivated.addListener(async () => {
+  const activeTabs = await browser.tabs.query({ active: true, currentWindow: true });
+  if (activeTabs.length === 0 || activeTabs[0].url === undefined) {
+    return;
+  }
+
+  // 一度に複数タブをアクティブにすることは考えない（アクティブなタブは1つのみとなる）
+  const activeTabUrl = new URL(activeTabs[0].url);
+  const activeTabHostName = activeTabUrl.hostname;
+  if (activeTabHostName === 'minkabu.jp') {
+    browser.action.enable();
+  } else {
+    browser.action.disable();
   }
 });

@@ -1,6 +1,6 @@
 import { crx } from '@crxjs/vite-plugin';
 import react from '@vitejs/plugin-react';
-import { join, resolve } from 'path';
+import { resolve } from 'path';
 import { defineConfig } from 'vite';
 import manifest from './src/manifest';
 
@@ -12,6 +12,9 @@ export default defineConfig({
     hmr: {
       port: 5173,
     },
+    // https://github.com/vitejs/vite/discussions/3396#discussioncomment-10371388
+    // vite --hostで起動する
+    host: true,
   },
   // prevent src/ prefix on extension urls
   root: resolve(__dirname, 'src'),
@@ -19,10 +22,6 @@ export default defineConfig({
   build: {
     outDir: resolve(__dirname, 'dist'),
     rollupOptions: {
-      input: {
-        // see web_accessible_resources in the manifest config
-        welcome: join(__dirname, 'src/welcome/welcome.html'),
-      },
       output: {
         chunkFileNames: 'assets/chunk-[hash].js',
       },

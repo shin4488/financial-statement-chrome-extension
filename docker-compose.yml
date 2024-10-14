@@ -1,0 +1,9 @@
+version: '3.8'
+services:
+  appfront:
+    build: .
+    ports:
+      - 5173:5173
+    volumes:
+      - .:/home/app/financialStatementChromeExtention
+      - ./node_modules:/home/app/financialStatementChromeExtention/node_modules

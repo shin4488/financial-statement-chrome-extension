@@ -1,9 +1,7 @@
 const Options = () => {
-  return (
-    <div className="flex h-screen items-center justify-center">
-      <h1>Options</h1>
-    </div>
-  );
+  // 拡張機能右クリック時のオプションに関する表示
+  // manifest.tsでoptions_uiを設定する際に使用する
+  return <></>;
 };
 
 export default Options;

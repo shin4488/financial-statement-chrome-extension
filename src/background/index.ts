@@ -11,7 +11,12 @@ store.subscribe(() => {
 
 const changeStateByActivatedTag = async () => {
   const activeTabs = await browser.tabs.query({ active: true, currentWindow: true });
-  if (activeTabs.length === 0 || activeTabs[0].url === undefined) {
+  if (
+    activeTabs.length === 0 ||
+    activeTabs[0].url === undefined ||
+    activeTabs[0].url === null ||
+    activeTabs[0].url === ''
+  ) {
     return;
   }
 

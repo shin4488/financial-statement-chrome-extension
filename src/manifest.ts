@@ -8,32 +8,20 @@ import { version } from '../package.json';
 const manifest = defineManifest(async (env) => ({
   manifest_version: 3,
   name: `${env.mode === 'development' ? '[Dev] ' : ''}investee | 投資のための企業分析をしよう！`,
-  description:
-    '最新の上場企業の財務財務三表をグラフで可視化します！日々公開される財務情報を見て簡単に企業分析を行えるため、株式の投資先選定に役立てられます。',
+  description: '上場企業の最新の財務三表を可視化します！株式の投資先選定に役立つ情報が満載です！',
   version,
+  // ブラウザイベントの監視
   background: {
     service_worker: 'background/index.ts',
   },
-  content_scripts: [
-    {
-      matches: ['https://www.youtube.com/'],
-      js: ['content/index.tsx'],
-    },
-  ],
-  host_permissions: ['<all_urls>'],
-  options_ui: {
-    page: 'options/options.html',
-    open_in_tab: true,
-  },
-  web_accessible_resources: [
-    {
-      resources: [
-        // this file is web accessible; it supports HMR b/c it's declared in `rollupOptions.input`
-        'welcome/welcome.html',
-      ],
-      matches: ['<all_urls>'],
-    },
-  ],
+  // 表示中のページ情報取得・表示中のページに対にする処理
+  content_scripts: [],
+  // 拡張機能右クリック時のオプションに関する表示
+  // options_ui: {},
+  // CORSエラー回避のためにこの拡張機能からアクセス可能なホスト
+  host_permissions: ['https://investee.info/'],
+  web_accessible_resources: [],
+  // 画面上でこの拡張機能が持つ機能
   action: {
     default_popup: 'popup/popup.html',
     default_icon: {
@@ -49,6 +37,7 @@ const manifest = defineManifest(async (env) => ({
     '48': 'images/extension_48.png',
     '128': 'images/extension_128.png',
   },
+  // この拡張機能が使えるリソース
   permissions: ['storage', 'tabs'],
 }));
 

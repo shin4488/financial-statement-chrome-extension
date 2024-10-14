@@ -23,7 +23,7 @@ class FinancialStatementList extends React.Component<FinancialStatementListWithS
   render(): React.ReactNode {
     return (
       <>
-        <Grid container spacing={2} padding={2}>
+        <Grid container spacing={2} paddingX={2}>
           {this.props.financialStatementResults.map((statement, index) => {
             const balanceSheet = statement.balanceSheet;
             const profitLoss = statement.profitLoss;

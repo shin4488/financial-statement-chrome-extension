@@ -3,3 +3,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.bar-container {
+  margin: auto;
+}
+
+.financial-statement-card-header {
+  text-align: left;
+}

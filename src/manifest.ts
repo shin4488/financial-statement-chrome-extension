@@ -25,17 +25,17 @@ const manifest = defineManifest(async (env) => ({
   action: {
     default_popup: 'popup/popup.html',
     default_icon: {
-      '16': 'images/extension_16.png',
-      '32': 'images/extension_32.png',
-      '48': 'images/extension_48.png',
-      '128': 'images/extension_128.png',
+      '16': 'images/logo16.png',
+      '32': 'images/logo32.png',
+      '48': 'images/logo48.png',
+      '128': 'images/logo128.png',
     },
   },
   icons: {
-    '16': 'images/extension_16.png',
-    '32': 'images/extension_32.png',
-    '48': 'images/extension_48.png',
-    '128': 'images/extension_128.png',
+    '16': 'images/logo16.png',
+    '32': 'images/logo32.png',
+    '48': 'images/logo48.png',
+    '128': 'images/logo128.png',
   },
   // この拡張機能が使えるリソース
   permissions: ['storage', 'tabs'],

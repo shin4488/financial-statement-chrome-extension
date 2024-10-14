@@ -12,6 +12,9 @@ export default defineConfig({
     hmr: {
       port: 5173,
     },
+    // https://github.com/vitejs/vite/discussions/3396#discussioncomment-10371388
+    // vite --hostで起動する
+    host: true,
   },
   // prevent src/ prefix on extension urls
   root: resolve(__dirname, 'src'),

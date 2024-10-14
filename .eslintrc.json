@@ -20,7 +20,17 @@
   "plugins": ["@typescript-eslint", "prettier", "react", "react-hooks"],
   "rules": {
     "react/react-in-jsx-scope": "off",
-    "prettier/prettier": 0
+    "prettier/prettier": 0,
+    "no-console": "warn",
+    "no-extra-semi": "warn",
+    "dot-notation": "warn",
+    "prefer-const": "error",
+    "no-unreachable-loop": "error",
+    "no-var": "error",
+    // 「if () return;」のような記述は「{}」つきの記述とする
+    "curly": "error",
+    // 「(obj?.foo)();」->「(obj?.foo)?.();」
+    "no-unsafe-optional-chaining": "error"
   },
   "overrides": [
     {
@@ -30,5 +40,5 @@
       }
     }
   ],
-  "ignorePatterns": ["dist/**", "dist-firefox-v2"]
+  "ignorePatterns": ["dist/**", "dist-firefox-v2", "src/__generated__/**"]
 }

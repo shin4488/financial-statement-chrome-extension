@@ -7,15 +7,16 @@ import { version } from '../package.json';
 
 const manifest = defineManifest(async (env) => ({
   manifest_version: 3,
-  name: `${env.mode === 'development' ? '[Dev] ' : ''}Browser Extension TypeScript & React Starter`,
-  description: 'Browser Extension, TypeScript, React',
+  name: `${env.mode === 'development' ? '[Dev] ' : ''}investee | 投資のための企業分析をしよう！`,
+  description:
+    '最新の上場企業の財務財務三表をグラフで可視化します！日々公開される財務情報を見て簡単に企業分析を行えるため、株式の投資先選定に役立てられます。',
   version,
   background: {
     service_worker: 'background/index.ts',
   },
   content_scripts: [
     {
-      matches: ['http://*/*', 'https://*/*', 'file:///*'],
+      matches: ['https://www.youtube.com/'],
       js: ['content/index.tsx'],
     },
   ],

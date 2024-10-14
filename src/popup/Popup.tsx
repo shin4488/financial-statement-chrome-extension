@@ -1,14 +1,10 @@
-import { Counter } from '../app/features/counter';
+import FinancialStatementList from '@/app/features/financialStatementList/FinancialStatementList';
 
 const Popup = () => {
-  document.body.className = 'w-[30rem] h-[15rem]';
+  // ポップアップ画面の大きさの定義
+  document.body.className = 'w-[31rem] h-[15rem]';
 
-  return (
-    <>
-      <div className="flex justify-center mt-2 text-base">Popup Counter</div>
-      <Counter />
-    </>
-  );
+  return <FinancialStatementList />;
 };
 
 export default Popup;

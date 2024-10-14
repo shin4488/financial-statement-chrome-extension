@@ -3,7 +3,7 @@ import StringUtil from '@/app/plugins/utils/stringUtil';
 import { NumberUtil } from '@/app/plugins/utils/numberUtil';
 import ApolloClientService from '@/app/plugins/apollo/service';
 import { FinancialStatementConditionParameter } from './parameter';
-import { FinancialStatement } from './result';
+import { FinancialStatementResult } from './result';
 
 export default class FinancialStatementService {
   private apolloService: ApolloClientService;
@@ -100,7 +100,7 @@ export default class FinancialStatementService {
 
   private mapFinancialStatementFromResponseToState(
     financialStatementResponse: CompanyFinancialStatement,
-  ): FinancialStatement {
+  ): FinancialStatementResult {
     const balanceSheetAmount = financialStatementResponse.balanceSheet?.amount;
     const balanceSheetRatio = financialStatementResponse.balanceSheet?.ratio;
     const profitLossAmount = financialStatementResponse.profitLoss?.amount;

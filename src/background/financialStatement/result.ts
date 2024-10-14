@@ -2,7 +2,7 @@ import { BalanceSheetBarChartProps } from '@/app/features/balanceSheetBarChart/p
 import { CashFlowBarChartProps } from '@/app/features/cashFlowBarChart/props';
 import { ProfitLossBarChartProps } from '@/app/features/profitLossBarChart/props';
 
-export interface FinancialStatement {
+export interface FinancialStatementResult {
   fiscalYearStartDate: string;
   fiscalYearEndDate: string;
   companyName: string;

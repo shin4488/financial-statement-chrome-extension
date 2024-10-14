@@ -9,7 +9,7 @@ store.subscribe(() => {
   // console.log('state', state);
 });
 
-browser.tabs.onActivated.addListener(async () => {
+const changeStateByActivatedTag = async () => {
   const activeTabs = await browser.tabs.query({ active: true, currentWindow: true });
   if (activeTabs.length === 0 || activeTabs[0].url === undefined) {
     return;
@@ -23,4 +23,10 @@ browser.tabs.onActivated.addListener(async () => {
   } else {
     browser.action.disable();
   }
-});
+};
+
+// タブ切り替えのため
+browser.tabs.onActivated.addListener(changeStateByActivatedTag);
+// 新規タブを開いたり、URLバーからサイト移動した時のため
+browser.tabs.onUpdated.addListener(changeStateByActivatedTag);
+browser.windows.onFocusChanged.addListener(changeStateByActivatedTag);

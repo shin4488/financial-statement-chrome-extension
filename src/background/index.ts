@@ -2,6 +2,7 @@ import browser from 'webextension-polyfill';
 import store, { initializeWrappedStore } from '@/app/store';
 import { setResult } from '@/app/slices/financialStatement';
 import FinancialStatementService from './financialStatement/service';
+import StringUtil from '@/app/plugins/utils/stringUtil';
 
 initializeWrappedStore();
 
@@ -13,17 +14,12 @@ store.subscribe(() => {
 
 const changeStateByActivatedTag = async () => {
   const activeTabs = await browser.tabs.query({ active: true, currentWindow: true });
-  if (
-    activeTabs.length === 0 ||
-    activeTabs[0].url === undefined ||
-    activeTabs[0].url === null ||
-    activeTabs[0].url === ''
-  ) {
+  if (activeTabs.length === 0 || StringUtil.isEmpty(activeTabs[0].url)) {
     return;
   }
 
   // 一度に複数タブをアクティブにすることは考えない（アクティブなタブは1つのみとなる）
-  const activeTabUrl = new URL(activeTabs[0].url);
+  const activeTabUrl = new URL(activeTabs[0].url as string);
   const activeTabHostName = activeTabUrl.hostname;
   const activeTabPathname = activeTabUrl.pathname;
   const hasStockCode =

@@ -36,11 +36,11 @@ export default class FinancialStatementService {
       .query(
         `
         query {
-          companyFinancialStatements(` +
-          `, offset: 0` +
-          `, limit: 100` +
-          `, stockCodes: ${JSON.stringify(parameter.stockCodes)}` +
-          `) {
+          companyFinancialStatements(
+            offset: 0
+            , limit: 100
+            , stockCodes: ${JSON.stringify(parameter.stockCodes)}
+          ) {
             fiscalYearStartDate
             fiscalYearEndDate
             filingDate

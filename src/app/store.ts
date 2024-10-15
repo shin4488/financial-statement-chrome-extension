@@ -13,7 +13,8 @@ import {
 } from 'reduxjs-toolkit-persist';
 import type { WebStorage } from 'reduxjs-toolkit-persist/lib/types';
 
-import counterReducer from './features/counter/counterSlice';
+import autoPlayStatusReducer from '@/app/slices/autoPlayStatusSlice';
+import financialStatementReducer from '@/app/slices/financialStatement';
 
 const persistConfig = {
   key: 'root',
@@ -21,7 +22,8 @@ const persistConfig = {
 };
 
 const reducers = combineReducers({
-  counter: counterReducer,
+  autoPlayStatus: autoPlayStatusReducer,
+  financialStatement: financialStatementReducer,
 });
 
 const persistedReducer: typeof reducers = persistReducer(persistConfig, reducers);

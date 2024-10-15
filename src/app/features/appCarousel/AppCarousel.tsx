@@ -8,7 +8,7 @@ export default class AppCarousel extends React.Component<AppCarouselProps> {
       <Carousel
         autoPlay={this.props.isAutoPlay}
         swipe={false}
-        interval={6000}
+        interval={5000}
         stopAutoPlayOnHover={this.props.stopAutoPlayOnHover}
         animation="slide"
         duration={100}

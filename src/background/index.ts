@@ -3,6 +3,8 @@ import store, { initializeWrappedStore } from '@/app/store';
 import { setResult } from '@/app/slices/financialStatement';
 import FinancialStatementService from './financialStatement/service';
 import StringUtil from '@/app/plugins/utils/stringUtil';
+import { getValidSiteInstance } from './siteClassMapper';
+import { StockSite } from './stockSite/stockSite';
 
 initializeWrappedStore();
 
@@ -15,23 +17,30 @@ store.subscribe(() => {
 const changeStateByActivatedTag = async () => {
   const activeTabs = await browser.tabs.query({ active: true, currentWindow: true });
   if (activeTabs.length === 0 || StringUtil.isEmpty(activeTabs[0].url)) {
+    browser.action.disable();
     return;
   }
 
   // 一度に複数タブをアクティブにすることは考えない（アクティブなタブは1つのみとなる）
   const activeTabUrl = new URL(activeTabs[0].url as string);
-  const activeTabHostName = activeTabUrl.hostname;
-  const activeTabPathname = activeTabUrl.pathname;
-  const hasStockCode =
-    activeTabHostName === 'minkabu.jp' && activeTabPathname.startsWith('/stock/');
-  if (!hasStockCode) {
+  const validSiteClass = getValidSiteInstance(activeTabUrl.hostname);
+  if (validSiteClass === undefined) {
+    browser.action.disable();
+    return;
+  }
+
+  const validSiteInstance: StockSite = new validSiteClass(
+    activeTabUrl.pathname,
+    activeTabUrl.searchParams,
+  );
+  if (!validSiteInstance.isValid()) {
     browser.action.disable();
     return;
   }
 
   browser.action.enable();
-  const stockCode = activeTabPathname.replace('/stock/', '');
   const statementInstance = new FinancialStatementService();
+  const stockCode = validSiteInstance.getStockCode();
   const statementResults = await statementInstance.load(stockCode);
   store.dispatch(setResult(statementResults));
 };

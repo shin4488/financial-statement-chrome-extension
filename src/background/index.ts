@@ -28,15 +28,16 @@ const changeStateByActivatedTag = async () => {
   const activeTabPathname = activeTabUrl.pathname;
   const hasStockCode =
     activeTabHostName === 'minkabu.jp' && activeTabPathname.startsWith('/stock/');
-  if (hasStockCode) {
-    browser.action.enable();
-    const statementInstance = new FinancialStatementService();
-    const stockCode = activeTabPathname.replace('/stock/', '');
-    const statementResults = await statementInstance.load(stockCode);
-    store.dispatch(setResult(statementResults));
-  } else {
+  if (!hasStockCode) {
     browser.action.disable();
+    return;
   }
+
+  browser.action.enable();
+  const stockCode = activeTabPathname.replace('/stock/', '');
+  const statementInstance = new FinancialStatementService();
+  const statementResults = await statementInstance.load(stockCode);
+  store.dispatch(setResult(statementResults));
 };
 
 // タブ切り替えのため

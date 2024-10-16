@@ -15,6 +15,7 @@ import type { WebStorage } from 'reduxjs-toolkit-persist/lib/types';
 
 import autoPlayStatusReducer from '@/app/slices/autoPlayStatusSlice';
 import financialStatementReducer from '@/app/slices/financialStatement';
+import sitePageReducer from '@/app/slices/sitePageSlice';
 
 const persistConfig = {
   key: 'root',
@@ -24,6 +25,7 @@ const persistConfig = {
 const reducers = combineReducers({
   autoPlayStatus: autoPlayStatusReducer,
   financialStatement: financialStatementReducer,
+  sitePage: sitePageReducer,
 });
 
 const persistedReducer: typeof reducers = persistReducer(persistConfig, reducers);

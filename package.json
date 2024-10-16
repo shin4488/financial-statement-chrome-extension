@@ -19,7 +19,9 @@
     "lint:type": "tsc --noEmit",
     "test": "jest",
     "ci:test": "run-s \" test --ci --reporters=\"default\" --reporters=\"github-actions\" \"",
-    "prepare": "simple-git-hooks"
+    "prepare": "simple-git-hooks",
+    "compile": "graphql-codegen",
+    "watch": "graphql-codegen -w"
   },
   "dependencies": {
     "@apollo/client": "^3.11.8",

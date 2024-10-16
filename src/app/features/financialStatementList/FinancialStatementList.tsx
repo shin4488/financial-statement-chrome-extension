@@ -21,6 +21,16 @@ type FinancialStatementListWithStoreProps = ReturnType<typeof mapStateToProps>;
 
 class FinancialStatementList extends React.Component<FinancialStatementListWithStoreProps> {
   render(): React.ReactNode {
+    if (this.props.financialStatementResults.length === 0) {
+      return (
+        <Grid size={12}>
+          <Card>
+            <CardHeader subheader="データがありません。決算報告前や日本会計基準を採用していない企業のデータは表示できません。"></CardHeader>
+          </Card>
+        </Grid>
+      );
+    }
+
     return (
       <>
         <Grid container spacing={2} paddingX={2}>

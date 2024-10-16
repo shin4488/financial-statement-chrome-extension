@@ -6,15 +6,15 @@ export default class YahooFinance implements StockSite {
 
   isValid(): boolean {
     const isStockPage = this.pathname.startsWith('/quote/');
-    const hasStockCode = !StringUtil.isEmpty(this.pathname.replaceAll(this.regexToReplace(), ''));
+    const hasStockCode = !StringUtil.isEmpty(this.replaceForStockCode());
     return isStockPage && hasStockCode;
   }
 
   getStockCode(): string {
-    return this.pathname.replaceAll(this.regexToReplace(), '');
+    return this.replaceForStockCode();
   }
 
-  private regexToReplace(): RegExp {
-    return /[^0-9]/gi;
+  private replaceForStockCode(): string {
+    return this.pathname.replaceAll(/[^0-9]/gi, '');
   }
 }

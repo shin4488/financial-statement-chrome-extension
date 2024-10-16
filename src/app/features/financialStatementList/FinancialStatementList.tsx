@@ -11,7 +11,6 @@ import ProfitLossBarChart from '@/app/features/profitLossBarChart/ProfitLossBarC
 import CashFlowBarChart from '@/app/features/cashFlowBarChart/CashFlowBarChart';
 import ChartAlternative from '@/app/features/chartAlternative/ChartAlternative';
 import { RootState } from '@/app/store';
-// import FirebaseAnalytics from '@/plugins/firebase/analytics';
 
 const mapStateToProps = (state: RootState) => ({
   isAutoPlay: state.autoPlayStatus.isAutoPlay,
@@ -64,20 +63,7 @@ class FinancialStatementList extends React.Component<FinancialStatementListWithS
                           target="_blank"
                           href={`https://kabutan.jp/stock/?code=${statement.stockCode}`}
                         >
-                          <span
-                          // onClick={() =>
-                          //   FirebaseAnalytics.logClickEvent({
-                          //     content_type: 'url',
-                          //     link_domain: 'kabutan.jp',
-                          //     link_url: `https://kabutan.jp/stock/?code=${statement.stockCode}`,
-                          //     custom_stock_code: statement.stockCode,
-                          //     custom_title: statement.companyName,
-                          //     custom_timespan: `${statement.fiscalYearStartDate}-${statement.fiscalYearEndDate}`,
-                          //   })
-                          // }
-                          >
-                            {statement.companyName}
-                          </span>
+                          <span>{statement.companyName}</span>
                         </Link>
                       </div>
                     }

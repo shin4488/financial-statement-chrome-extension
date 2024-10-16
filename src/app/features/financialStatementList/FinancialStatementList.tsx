@@ -25,7 +25,7 @@ class FinancialStatementList extends React.Component<FinancialStatementListWithS
       return (
         <Grid size={12}>
           <Card>
-            <CardHeader subheader="データがありません。"></CardHeader>
+            <CardHeader subheader="データがありません。決算報告前や日本会計基準を採用していない企業のデータは表示できません。"></CardHeader>
           </Card>
         </Grid>
       );

@@ -21,6 +21,16 @@ type FinancialStatementListWithStoreProps = ReturnType<typeof mapStateToProps>;
 
 class FinancialStatementList extends React.Component<FinancialStatementListWithStoreProps> {
   render(): React.ReactNode {
+    if (this.props.financialStatementResults.length === 0) {
+      return (
+        <Grid size={12}>
+          <Card>
+            <CardHeader subheader="データがありません。"></CardHeader>
+          </Card>
+        </Grid>
+      );
+    }
+
     return (
       <>
         <Grid container spacing={2} paddingX={2}>

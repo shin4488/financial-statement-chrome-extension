@@ -1,6 +1,7 @@
 import browser from 'webextension-polyfill';
 import store, { initializeWrappedStore } from '@/app/store';
 import { setResult } from '@/app/slices/financialStatement';
+import { changeSiteDomain, changeStockCode } from '@/app/slices/sitePageSlice';
 import FinancialStatementService from './financialStatement/service';
 import StringUtil from '@/app/plugins/utils/stringUtil';
 import { getValidSiteInstance } from './siteClassMapper';
@@ -43,6 +44,8 @@ const changeStateByActivatedTag = async () => {
   const stockCode = validSiteInstance.getStockCode();
   const statementResults = await statementInstance.load(stockCode);
   store.dispatch(setResult(statementResults));
+  store.dispatch(changeSiteDomain(activeTabUrl.hostname));
+  store.dispatch(changeStockCode(stockCode));
 };
 
 // タブ切り替えのため

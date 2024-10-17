@@ -1,7 +1,16 @@
 import React from 'react';
 import { connect } from 'react-redux';
 import { DefaultLayoutProps } from './props';
-import { Checkbox, FormControl, FormControlLabel, Link, AppBar, Toolbar, Box } from '@mui/material';
+import {
+  Checkbox,
+  FormControl,
+  FormControlLabel,
+  Link,
+  AppBar,
+  Toolbar,
+  Box,
+  Typography,
+} from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { AppDispatch } from '@/app/store';
 import { RootState } from '@/app/store';
@@ -32,9 +41,9 @@ class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
     return (
       <>
         <AppBar position="sticky" color="default" sx={{ bgcolor: 'F9F9E0' }}>
-          <Toolbar sx={{ ml: -1 }} variant="dense">
-            <Box>
-              <Grid container size={4}>
+          <Toolbar variant="dense">
+            <Grid container size={12} columnSpacing={3} alignItems="center">
+              <Grid>
                 <FormControl>
                   <FormControlLabel
                     control={
@@ -54,7 +63,16 @@ class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
                   />
                 </FormControl>
               </Grid>
-            </Box>
+              <Grid>
+                <Typography>
+                  企業比較するなら
+                  <Link target="_blank" href="https://investee.info/" underline="none">
+                    investee.info
+                  </Link>
+                  へ
+                </Typography>
+              </Grid>
+            </Grid>
           </Toolbar>
         </AppBar>
 

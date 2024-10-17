@@ -20,3 +20,5 @@ dist-firefox-v2
 *.njsproj
 *.sln
 *.sw?
+
+.env

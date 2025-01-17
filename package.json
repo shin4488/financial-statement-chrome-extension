@@ -1,7 +1,7 @@
 {
   "name": "browser-extension-react-ts-starter",
   "private": true,
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "scripts": {
     "dev": "run-s clean && vite",
@@ -45,7 +45,7 @@
     "webextension-polyfill": "^0.10.0"
   },
   "devDependencies": {
-    "@crxjs/vite-plugin": "^2.0.0-beta.17",
+    "@crxjs/vite-plugin": "^2.0.0-beta.26",
     "@graphql-codegen/cli": "^5.0.3",
     "@graphql-codegen/client-preset": "^4.4.0",
     "@parcel/watcher": "^2.4.1",

@@ -22,6 +22,7 @@ const autoPlayStatusLocalStorageKey = 'investeeExtensionIsStatementAutoPlay';
 // store更新・アクセスするための設定
 const mapStateToProps = (state: RootState) => ({
   isAutoPlay: state.autoPlayStatus.isAutoPlay,
+  stockCode: state.sitePage.stockCode,
 });
 const mapDispatchToProps = (dispatch: AppDispatch) => ({
   actions: bindActionCreators({ changeAutoPlayStatus }, dispatch),
@@ -66,7 +67,11 @@ class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
               <Grid>
                 <Typography>
                   企業比較するなら
-                  <Link target="_blank" href="https://investee.info/" underline="none">
+                  <Link
+                    target="_blank"
+                    href={`https://investee.info/?stock-codes=${this.props.stockCode}`}
+                    underline="none"
+                  >
                     investee.info
                   </Link>
                   へ

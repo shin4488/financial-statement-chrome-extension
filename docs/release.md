@@ -17,6 +17,7 @@
 3. クリーン検証（`yarn install --frozen-lockfile` → `yarn lint` → `yarn test`）と本番ビルド（`yarn build`）
 4. ビルド成果物の検査（`[Dev]` が付いていない・version 反映・host_permissions が本番のみ）
 5. Chrome Web Store 申請用 zip の作成と、バージョンアップ PR の作成
+6. バージョンアップ PR のマージ後、タグと GitHub Release の作成（命名は既存の慣例に従いバージョン番号そのまま。例: `1.0.2`）
 
 ## 人間が行う部分
 
@@ -43,5 +44,4 @@
 
 ### 4. 後片付け（任意・エージェントに依頼可）
 
-- リリースタグ: `git tag v<version> && git push origin v<version>`
 - 新クエリの本番デプロイが完了していれば、`codegen.ts` の schema 参照をローカル docker から本番（`https://investee.info/api/graphql`）へ戻す PR を検討する（ローカル docker 必須の制約を外せる。詳細は [README.md](../README.md) の codegen 節）

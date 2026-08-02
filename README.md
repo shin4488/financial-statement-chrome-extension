@@ -19,13 +19,23 @@
 
 ## 仕組み
 
-```
-タブ切替・URL変更（background service worker）
-  → 対応サイトなら銘柄コードを抽出（src/background/stockSite/）
-  → GraphQL financialReports をクエリ（src/background/financialStatement/）
-  → Redux store へ格納（webext-redux で background/popup 間を共有）
-  → ポップアップ（src/popup/ → src/app/）がカルーセルにチャートを描画
-      └ チャート本体は共有キット src/shared/financialCharts/（Webフロントとコピー共有）
+```mermaid
+flowchart TB
+    TAB["タブ切替・URL変更<br>（対応サイトの銘柄ページ）"]
+    subgraph bg["background service worker（src/background/）"]
+        SITE["stockSite/ + siteClassMapper.ts<br>対応サイト判定・銘柄コード抽出"]
+        SVC["financialStatement/<br>financialReports クエリ実行"]
+    end
+    API["GraphQL API<br>本番: investee.info/api/graphql<br>開発ビルド: localhost:20000/graphql"]
+    STORE["Redux store（webext-redux）<br>background と popup で共有"]
+    subgraph pop["ポップアップ（src/popup/ → src/app/）"]
+        LIST["FinancialStatementList<br>MUI カード + カルーセル"]
+        KIT["共有チャートキット src/shared/financialCharts/<br>StackedBarChart / WaterfallChart / ChartUnavailable"]
+    end
+    TAB --> SITE --> SVC
+    SVC -->|"query financialReports"| API
+    API -->|"チャート構造<br>（bars/segments・steps・colorRole）"| SVC
+    SVC --> STORE --> LIST --> KIT
 ```
 
 - チャートの科目・積み上げ順・色 role はすべて API が返す。フロントは解釈せず描画するだけの汎用契約（詳細は financial-statement リポジトリの `docs/architecture/04_frontend.md`）

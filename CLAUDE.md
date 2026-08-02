@@ -15,9 +15,20 @@ investee（https://investee.info）のブラウザ拡張。株式情報サイト
 
 ## アーキテクチャ
 
-- background（`src/background/`）がタブイベントで銘柄コードを抽出し（`stockSite/` + `siteClassMapper.ts`）、Apollo で `financialReports` をクエリ → Redux store（webext-redux）→ popup（`src/popup/` → `src/app/`）が描画
+```mermaid
+flowchart LR
+    BG["background（src/background/）<br>タブイベント→サイト判定・銘柄コード抽出<br>（stockSite/ + siteClassMapper.ts）"]
+    API["GraphQL API<br>本番: investee.info/api/graphql<br>開発ビルド: localhost:20000/graphql"]
+    STORE["Redux store<br>（webext-redux で共有）"]
+    POPUP["popup（src/popup/ → src/app/）<br>FinancialStatementList"]
+    KIT["src/shared/financialCharts/<br>StackedBarChart / WaterfallChart / ChartUnavailable"]
+    BG -->|"query financialReports"| API
+    API -->|"チャート構造"| BG
+    BG --> STORE --> POPUP --> KIT
+```
+
 - パスエイリアス `@/` = `src/`。UI コンポーネントはクラスコンポーネントが既存の流儀
-- チャート部品は `src/shared/financialCharts/`（StackedBarChart / WaterfallChart / ChartUnavailable）。科目・色・積み上げ順は API の返却値（colorRole・配列順序）が契約で、フロントで解釈・並べ替えをしない
+- チャートの科目・色・積み上げ順は API の返却値（colorRole・配列順序）が契約で、フロントで解釈・並べ替えをしない
 
 ## 重要な規約
 

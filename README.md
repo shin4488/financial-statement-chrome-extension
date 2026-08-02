@@ -8,14 +8,14 @@
 
 以下のサイトで銘柄ページを開くと拡張アイコンが有効になり、クリックで財務 3 表のカルーセルを表示する。
 
-| サイト             | ドメイン                                         |
-| ------------------ | ------------------------------------------------ |
-| 株探               | kabutan.jp                                       |
-| みんかぶ           | minkabu.jp                                       |
-| Yahoo!ファイナンス | finance.yahoo.co.jp                              |
-| 四季報オンライン   | shikiho.toyokeizai.net                           |
-| バフェット・コード | www.buffett-code.com                             |
-| 楽天証券           | www.rakuten-sec.co.jp / member.rakuten-sec.co.jp |
+| サイト             | ドメイン                                                                                                                |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| 株探               | [kabutan.jp](https://kabutan.jp/)                                                                                       |
+| みんかぶ           | [minkabu.jp](https://minkabu.jp/)                                                                                       |
+| Yahoo!ファイナンス | [finance.yahoo.co.jp](https://finance.yahoo.co.jp/)                                                                     |
+| 四季報オンライン   | [shikiho.toyokeizai.net](https://shikiho.toyokeizai.net/)                                                               |
+| バフェット・コード | [www.buffett-code.com](https://www.buffett-code.com/)                                                                   |
+| 楽天証券           | [www.rakuten-sec.co.jp](https://www.rakuten-sec.co.jp/) / [member.rakuten-sec.co.jp](https://member.rakuten-sec.co.jp/) |
 
 ## 仕組み
 

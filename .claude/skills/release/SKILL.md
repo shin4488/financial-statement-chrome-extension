@@ -64,10 +64,25 @@ zip はコミットしない（gitignore 対象外のためリポジトリ直下
 
 - バージョンアップのコミットを作り、PR 経由で main へ（コミットメッセージは `change:` プレフィックスの英語 1 行）
 - コミットするのは `package.json`（と lockfile が変わった場合のみ `yarn.lock`）
+- PR のマージはユーザーに依頼し、マージされるまでタグ作成には進まない
 
-## 6. 完了報告
+## 6. タグと GitHub Release の作成（PR マージ後）
+
+バージョンアップ PR が main にマージされたことを確認してから実行する。
+**命名は既存の慣例に従う: タグ名・Release 名ともバージョン番号そのまま（例: `1.0.2`。`v` プレフィックスなし）。本文は空。**
+
+```bash
+git fetch origin && git tag <version> origin/main && git push origin <version>
+```
+
+```bash
+gh release create <version> --title <version> --notes ""
+```
+
+## 7. 完了報告
 
 以下をユーザーに伝えて終了する:
 
 - 作成した zip のパスとバージョン
+- 作成したタグと GitHub Release
 - 残りは人間の作業であること: 実機確認チェックリスト → Chrome Web Store デベロッパーダッシュボードへアップロード → 審査提出（手順は [docs/release.md](../../../docs/release.md)）

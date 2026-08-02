@@ -16,7 +16,11 @@ export default class ApolloClientService {
 
   create(): ApolloClient<NormalizedCacheObject> {
     return new ApolloClient({
-      uri: 'https://investee.info/api/graphql',
+      // financialReportsが本番未デプロイの間、開発ビルドはローカルdockerのバックエンドを参照する
+      uri:
+        import.meta.env.MODE === 'development'
+          ? 'http://localhost:20000/graphql'
+          : 'https://investee.info/api/graphql',
       cache: new InMemoryCache(),
     });
   }

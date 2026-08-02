@@ -6,11 +6,16 @@ import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
 import CardContent from '@mui/material/CardContent';
 import AppCarousel from '@/app/features/appCarousel/AppCarousel';
-import BalanceSheetBarCahrt from '@/app/features/balanceSheetBarChart/BalanceSheetBarChart';
-import ProfitLossBarChart from '@/app/features/profitLossBarChart/ProfitLossBarChart';
-import CashFlowBarChart from '@/app/features/cashFlowBarChart/CashFlowBarChart';
-import ChartAlternative from '@/app/features/chartAlternative/ChartAlternative';
+import { StackedBarChart, WaterfallChart } from '@/shared/financialCharts';
 import { RootState } from '@/app/store';
+
+// 会計基準は日本基準以外のみサブヘッダに表示する（判断材料として意味を持つのは
+// 「日本基準とは表示形式が違う」ことを示す場合だけのため）。
+// accountingStandardを描画分岐に使わないことがこの設計の規律
+const nonJgaapBadge: Record<string, string> = {
+  ifrs: 'IFRS',
+  us_gaap: '米国基準',
+};
 
 const mapStateToProps = (state: RootState) => ({
   isAutoPlay: state.autoPlayStatus.isAutoPlay,
@@ -24,7 +29,7 @@ class FinancialStatementList extends React.Component<FinancialStatementListWithS
       return (
         <Grid size={12}>
           <Card>
-            <CardHeader subheader="データがありません。決算報告前や日本会計基準を採用していない企業のデータは表示できません。"></CardHeader>
+            <CardHeader subheader="データがありません。決算報告前などデータが未登録の企業は表示できません。"></CardHeader>
           </Card>
         </Grid>
       );
@@ -33,26 +38,16 @@ class FinancialStatementList extends React.Component<FinancialStatementListWithS
     return (
       <>
         <Grid container spacing={2} paddingX={2}>
-          {this.props.financialStatementResults.map((statement, index) => {
-            const balanceSheet = statement.balanceSheet;
-            const profitLoss = statement.profitLoss;
-            const cashFlow = statement.cashFlow;
-            const consolidationTypeLabel = statement.hasConsolidatedFinancialStatement
-              ? '連結'
-              : '単体';
-            const ignoredInductoryCodes = ['bnk', 'ele'];
-            const isBankOrElectricity =
-              (statement.hasConsolidatedFinancialStatement &&
-                ignoredInductoryCodes.includes(
-                  statement.consolidatedInductoryCode.toLowerCase(),
-                )) ||
-              (!statement.hasConsolidatedFinancialStatement &&
-                ignoredInductoryCodes.includes(
-                  statement.nonConsolidatedInductoryCode.toLowerCase(),
-                ));
+          {this.props.financialStatementResults.map((statement) => {
+            const consolidationTypeLabel =
+              statement.consolidationType === 'consolidated' ? '連結' : '単体';
+            const standardLabel = nonJgaapBadge[statement.accountingStandard];
+            const subheaderSuffix = standardLabel
+              ? `（${consolidationTypeLabel}・${standardLabel}）`
+              : `（${consolidationTypeLabel}）`;
 
             return (
-              <Grid size={12} key={index}>
+              <Grid size={12} key={statement.id}>
                 <Card>
                   <CardHeader
                     title={
@@ -61,7 +56,7 @@ class FinancialStatementList extends React.Component<FinancialStatementListWithS
                           title={`${statement.companyName}（株探）`}
                           underline="none"
                           target="_blank"
-                          href={`https://kabutan.jp/stock/?code=${statement.stockCode}`}
+                          href={`https://kabutan.jp/stock/?code=${statement.stockCode ?? ''}`}
                         >
                           <span>{statement.companyName}</span>
                         </Link>
@@ -69,41 +64,17 @@ class FinancialStatementList extends React.Component<FinancialStatementListWithS
                     }
                     subheader={
                       <div className="financial-statement-card-header">
-                        {`${statement.fiscalYearStartDate} - ${statement.fiscalYearEndDate}（${consolidationTypeLabel}）`}
+                        {`${statement.fiscalYearStartDate} - ${statement.fiscalYearEndDate}${subheaderSuffix}`}
                       </div>
                     }
                   />
                   <CardContent>
                     <AppCarousel isAutoPlay={this.props.isAutoPlay} stopAutoPlayOnHover={false}>
-                      {/* 貸借対照表 */}
-                      {isBankOrElectricity ? (
-                        <ChartAlternative>
-                          貸借対照表: 金融機関や電気事業者のデータ表示には対応しておりません。
-                        </ChartAlternative>
-                      ) : (
-                        <BalanceSheetBarCahrt
-                          amount={balanceSheet.amount}
-                          ratio={balanceSheet.ratio}
-                        />
-                      )}
-
-                      {/* 損益計算書 */}
-                      {isBankOrElectricity ? (
-                        <ChartAlternative>
-                          損益計算書: 金融機関や電気事業者のデータ表示には対応しておりません。
-                        </ChartAlternative>
-                      ) : (
-                        <ProfitLossBarChart amount={profitLoss.amount} ratio={profitLoss.ratio} />
-                      )}
-
-                      {/* キャッシュフロー計算書 */}
-                      <CashFlowBarChart
-                        startingCash={cashFlow.startingCash}
-                        operatingActivitiesCashFlow={cashFlow.operatingActivitiesCashFlow}
-                        investingActivitiesCashFlow={cashFlow.investingActivitiesCashFlow}
-                        financingActivitiesCashFlow={cashFlow.financingActivitiesCashFlow}
-                        endingCash={cashFlow.endingCash}
-                      />
+                      {/* 貸借対照表・損益計算書・キャッシュフロー計算書。
+                          チャート構造はAPIの返却値をそのまま渡す（表示不可はrenderable/noteで届く） */}
+                      <StackedBarChart chart={statement.balanceSheet} />
+                      <StackedBarChart chart={statement.profitLoss} />
+                      <WaterfallChart chart={statement.cashFlow} />
                     </AppCarousel>
                   </CardContent>
                 </Card>

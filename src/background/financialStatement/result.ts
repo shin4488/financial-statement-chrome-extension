@@ -1,16 +1,6 @@
-import { BalanceSheetBarChartProps } from '@/app/features/balanceSheetBarChart/props';
-import { CashFlowBarChartProps } from '@/app/features/cashFlowBarChart/props';
-import { ProfitLossBarChartProps } from '@/app/features/profitLossBarChart/props';
+import { FinancialReportsQuery } from '@/__generated__/graphql';
 
-export interface FinancialStatementResult {
-  fiscalYearStartDate: string;
-  fiscalYearEndDate: string;
-  companyName: string;
-  stockCode: string;
-  hasConsolidatedFinancialStatement: boolean;
-  consolidatedInductoryCode: string;
-  nonConsolidatedInductoryCode: string;
-  balanceSheet: BalanceSheetBarChartProps;
-  profitLoss: ProfitLossBarChartProps;
-  cashFlow: CashFlowBarChartProps;
-}
+// codegenの生成型から導出し、手書きしない（スキーマ変更時に型ズレが起きない）。
+// チャート部分（balanceSheet/profitLoss/cashFlow）は共有チャートキット
+// （@/shared/financialCharts）の構造的型と構造が一致するため、変換なしでそのまま渡せる
+export type FinancialStatementResult = FinancialReportsQuery['financialReports'][number];

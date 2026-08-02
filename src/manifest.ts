@@ -19,7 +19,13 @@ const manifest = defineManifest(async (env) => ({
   // 拡張機能右クリック時のオプションに関する表示
   // options_ui: {},
   // CORSエラー回避のためにこの拡張機能からアクセス可能なホスト
-  host_permissions: ['https://investee.info/'],
+  // （本番APIはCORSヘッダを返さないため、拡張からのfetchはhost_permissionsのCORS免除が頼り。
+  //   パスまで含めた '/*' でないと /api/graphql がマッチしない）
+  // 開発ビルドはローカルdockerのバックエンド（financial-statementリポジトリ）も許可する
+  host_permissions:
+    env.mode === 'development'
+      ? ['https://investee.info/*', 'http://localhost:20000/*']
+      : ['https://investee.info/*'],
   web_accessible_resources: [],
   // 画面上でこの拡張機能が持つ機能
   action: {

@@ -109,6 +109,8 @@ Web フロント（financial-statement `application/frontend`）とコピー共�
 3. `yarn build`（`dist/`: Chrome MV3、`dist-firefox-v2/`: Firefox MV2）
 4. 本番ビルドを実機確認のうえ Chrome Web Store へ申請
 
+詳細な手順・チェックリストは [docs/release.md](docs/release.md) を参照。
+
 ## 補足: host_permissions と CORS
 
 本番 API は CORS ヘッダを返さないため、拡張からの fetch は `host_permissions` による CORS 免除に依存している。パターンはパス付きの `https://investee.info/*` であること（Chrome の CORS 免除はオリジン単位のためパス無しでも動作はするが、マッチパターンとしては誤り）。

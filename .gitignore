@@ -23,3 +23,7 @@ dist-firefox-v2
 
 .env
 /tmp/
+
+# Claude Code（.claude/skills/ はコミット対象、個人設定とworktreeは除外）
+.claude/settings.local.json
+.claude/worktrees/

@@ -3,15 +3,12 @@
 `financialReports` GraphQL API が返すチャート構造（StackChart / WaterfallChart）を
 そのまま描画する汎用コンポーネント群。**科目・会計基準・表示形式の知識を一切持たない**。
 
-## コピー元（ドリフト追跡用）
+## コピー元
 
-- コピー元リポジトリ: financial-statement `application/frontend`（`src/shared/financialCharts/`）
-- コピー元コミット SHA: `40f8157083df7d4210c3a3cd3e92932b2304a6af`（main）
-  - 注: コピー時点でコピー元は未コミットの変更を含む（colorRoles.ts の expense3/revenue2、
-    WaterfallChart.tsx のコメント修正）。コピー元でコミットされたら SHA を更新すること
-- コピー日: 2026-08-02
+- financial-statement `application/frontend` の `src/shared/financialCharts/`
 
 このディレクトリはコピー運用。修正はコピー元（Web フロント側）に入れてから展開すること。
+ドリフトの確認はコピー元ディレクトリとの diff で行う（本リポジトリの prettier 整形による差分は許容）。
 
 ## 共有の前提（このディレクトリの規約）
 

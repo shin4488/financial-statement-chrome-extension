@@ -100,7 +100,7 @@ yarn lint
 
 ## 共有チャートキット（src/shared/financialCharts/）
 
-Web フロント（financial-statement `application/frontend`）とコピー共有している汎用チャート部品。**このリポジトリ内で直接編集しないこと。** 修正はコピー元に入れてからディレクトリごとコピーし、コピー先 README のコピー元コミット SHA 記録を更新する。特に `colorRoles.ts` はバックエンドの enum と同時に変更される契約。詳細は [src/shared/financialCharts/README.md](src/shared/financialCharts/README.md)。
+Web フロント（financial-statement `application/frontend`）とコピー共有している汎用チャート部品。**このリポジトリ内で直接編集しないこと。** 修正はコピー元に入れてからディレクトリごとコピーする（ドリフト確認はコピー元ディレクトリとの diff）。特に `colorRoles.ts` はバックエンドの enum と同時に変更される契約。詳細は [src/shared/financialCharts/README.md](src/shared/financialCharts/README.md)。
 
 ## リリース
 

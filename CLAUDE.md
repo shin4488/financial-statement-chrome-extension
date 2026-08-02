@@ -34,7 +34,7 @@ flowchart LR
 
 - **GraphQL クエリは `.graphql` ファイル**（codegen の documents: `**/*.graphql`。gql タグではない）。変更後 `yarn compile`。生成物 `src/__generated__/` はコミットする
 - codegen の schema はローカル docker `http://localhost:20000/graphql` を参照（`financialReports` が本番デプロイされたら本番 introspection に戻してよい）。`Money` スカラは `number`
-- **`src/shared/financialCharts/` は直接編集禁止**。コピー元は financial-statement `application/frontend/src/shared/financialCharts/`。同期はディレクトリごとコピーし、コピー先 README のコピー元 SHA 記録を更新する。`colorRoles.ts` はバックエンド enum との契約で、BE / Web フロント / 拡張の 3 点同時変更
+- **`src/shared/financialCharts/` は直接編集禁止**。コピー元は financial-statement `application/frontend/src/shared/financialCharts/`。同期はディレクトリごとコピーする（ドリフト確認はコピー元との diff）。`colorRoles.ts` はバックエンド enum との契約で、BE / Web フロント / 拡張の 3 点同時変更
 - 接続先切替は `import.meta.env.MODE`（`src/app/plugins/apollo/service.ts`）と `env.mode`（`src/manifest.ts`）。本番 API は CORS ヘッダを返さないため host_permissions の CORS 免除で fetch している。パターンは `https://investee.info/*`（パス `/*` 必須）
 - コミットメッセージは `add:` / `change:` プレフィックスの英語 1 行（`git log` 参照）
 

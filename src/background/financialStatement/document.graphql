@@ -1,53 +1,51 @@
-query GetCompanyFinancialStatementsByCodes($stockCodes: [String!]) {
-  companyFinancialStatements(offset: 0, limit: 100, stockCodes: $stockCodes) {
+query FinancialReports($stockCodes: [String!]) {
+  financialReports(limit: 100, offset: 0, stockCodes: $stockCodes) {
+    id
+    stockCode
+    companyName
     fiscalYearStartDate
     fiscalYearEndDate
-    filingDate
-    stockCode
-    companyJapaneseName
-    hasConsolidatedFinancialStatement
-    consolidatedInductoryCode
-    nonConsolidatedInductoryCode
+    accountingStandard
+    consolidationType
     balanceSheet {
-      amount {
-        currentAsset
-        propertyPlantAndEquipment
-        intangibleAsset
-        investmentAndOtherAsset
-        currentLiability
-        noncurrentLiability
-        netAsset
-      }
-      ratio {
-        currentAsset
-        propertyPlantAndEquipment
-        intangibleAsset
-        investmentAndOtherAsset
-        currentLiability
-        noncurrentLiability
-        netAsset
+      renderable
+      note
+      bars {
+        label
+        segments {
+          key
+          label
+          amount
+          signedAmount
+          ratio
+          colorRole
+        }
       }
     }
     profitLoss {
-      amount {
-        netSales
-        originalCost
-        sellingGeneralExpense
-        operatingIncome
-      }
-      ratio {
-        netSales
-        originalCost
-        sellingGeneralExpense
-        operatingIncome
+      renderable
+      note
+      bars {
+        label
+        segments {
+          key
+          label
+          amount
+          signedAmount
+          ratio
+          colorRole
+        }
       }
     }
     cashFlow {
-      startingCash
-      operatingActivitiesCashFlow
-      investingActivitiesCashFlow
-      financingActivitiesCashFlow
-      endingCash
+      renderable
+      note
+      steps {
+        key
+        label
+        amount
+        kind
+      }
     }
   }
 }

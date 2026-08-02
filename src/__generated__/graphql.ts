@@ -20,7 +20,14 @@ export type Scalars = {
   Float: { input: number; output: number };
   /** Represents non-fractional signed whole numeric values. Since the value may exceed the size of a 32-bit integer, it's encoded as a string. */
   BigInt: { input: any; output: any };
+  /** 円単位の金額。Int32の範囲を超え得るがJSON上は数値のまま返す */
+  Money: { input: number; output: number };
 };
+
+export enum CashFlowSign {
+  Negative = 'NEGATIVE',
+  Positive = 'POSITIVE',
+}
 
 export enum NumberSign {
   Negative = 'NEGATIVE',
@@ -39,80 +46,79 @@ export type SandboxTestInput = {
   clientMutationId?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type GetCompanyFinancialStatementsByCodesQueryVariables = Exact<{
+export type FinancialReportsQueryVariables = Exact<{
   stockCodes?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
 }>;
 
-export type GetCompanyFinancialStatementsByCodesQuery = {
+export type FinancialReportsQuery = {
   __typename?: 'Query';
-  companyFinancialStatements?: Array<{
-    __typename?: 'CompanyFinancialStatement';
-    fiscalYearStartDate?: string | null;
-    fiscalYearEndDate?: string | null;
-    filingDate?: string | null;
+  financialReports: Array<{
+    __typename?: 'FinancialReport';
+    id: string;
     stockCode?: string | null;
-    companyJapaneseName?: string | null;
-    hasConsolidatedFinancialStatement?: boolean | null;
-    consolidatedInductoryCode?: string | null;
-    nonConsolidatedInductoryCode?: string | null;
-    balanceSheet?: {
-      __typename?: 'BalanceSheet';
-      amount?: {
-        __typename?: 'BalanceSheetAmount';
-        currentAsset?: any | null;
-        propertyPlantAndEquipment?: any | null;
-        intangibleAsset?: any | null;
-        investmentAndOtherAsset?: any | null;
-        currentLiability?: any | null;
-        noncurrentLiability?: any | null;
-        netAsset?: any | null;
-      } | null;
-      ratio?: {
-        __typename?: 'BalanceSheetRatio';
-        currentAsset?: number | null;
-        propertyPlantAndEquipment?: number | null;
-        intangibleAsset?: number | null;
-        investmentAndOtherAsset?: number | null;
-        currentLiability?: number | null;
-        noncurrentLiability?: number | null;
-        netAsset?: number | null;
-      } | null;
-    } | null;
-    profitLoss?: {
-      __typename?: 'ProfitLoss';
-      amount?: {
-        __typename?: 'ProfitLossAmount';
-        netSales?: any | null;
-        originalCost?: any | null;
-        sellingGeneralExpense?: any | null;
-        operatingIncome?: any | null;
-      } | null;
-      ratio?: {
-        __typename?: 'ProfitLossRatio';
-        netSales?: number | null;
-        originalCost?: number | null;
-        sellingGeneralExpense?: number | null;
-        operatingIncome?: number | null;
-      } | null;
-    } | null;
-    cashFlow?: {
-      __typename?: 'CashFlow';
-      startingCash?: any | null;
-      operatingActivitiesCashFlow?: any | null;
-      investingActivitiesCashFlow?: any | null;
-      financingActivitiesCashFlow?: any | null;
-      endingCash?: any | null;
-    } | null;
-  }> | null;
+    companyName?: string | null;
+    fiscalYearStartDate: string;
+    fiscalYearEndDate: string;
+    accountingStandard: string;
+    consolidationType: string;
+    balanceSheet: {
+      __typename?: 'StackChart';
+      renderable: boolean;
+      note?: string | null;
+      bars: Array<{
+        __typename?: 'StackBar';
+        label: string;
+        segments: Array<{
+          __typename?: 'Segment';
+          key: string;
+          label: string;
+          amount: number;
+          signedAmount: number;
+          ratio?: number | null;
+          colorRole: string;
+        }>;
+      }>;
+    };
+    profitLoss: {
+      __typename?: 'StackChart';
+      renderable: boolean;
+      note?: string | null;
+      bars: Array<{
+        __typename?: 'StackBar';
+        label: string;
+        segments: Array<{
+          __typename?: 'Segment';
+          key: string;
+          label: string;
+          amount: number;
+          signedAmount: number;
+          ratio?: number | null;
+          colorRole: string;
+        }>;
+      }>;
+    };
+    cashFlow: {
+      __typename?: 'WaterfallChart';
+      renderable: boolean;
+      note?: string | null;
+      steps: Array<{
+        __typename?: 'WaterfallStep';
+        key: string;
+        label: string;
+        amount: number;
+        kind: string;
+      }>;
+    };
+  }>;
 };
 
-export const GetCompanyFinancialStatementsByCodesDocument = {
+export const FinancialReportsDocument = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'query',
-      name: { kind: 'Name', value: 'GetCompanyFinancialStatementsByCodes' },
+      name: { kind: 'Name', value: 'FinancialReports' },
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
@@ -131,17 +137,17 @@ export const GetCompanyFinancialStatementsByCodesDocument = {
         selections: [
           {
             kind: 'Field',
-            name: { kind: 'Name', value: 'companyFinancialStatements' },
+            name: { kind: 'Name', value: 'financialReports' },
             arguments: [
-              {
-                kind: 'Argument',
-                name: { kind: 'Name', value: 'offset' },
-                value: { kind: 'IntValue', value: '0' },
-              },
               {
                 kind: 'Argument',
                 name: { kind: 'Name', value: 'limit' },
                 value: { kind: 'IntValue', value: '100' },
+              },
+              {
+                kind: 'Argument',
+                name: { kind: 'Name', value: 'offset' },
+                value: { kind: 'IntValue', value: '0' },
               },
               {
                 kind: 'Argument',
@@ -152,64 +158,43 @@ export const GetCompanyFinancialStatementsByCodesDocument = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'stockCode' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'companyName' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'fiscalYearStartDate' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'fiscalYearEndDate' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'filingDate' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'stockCode' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'companyJapaneseName' } },
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'hasConsolidatedFinancialStatement' },
-                },
-                { kind: 'Field', name: { kind: 'Name', value: 'consolidatedInductoryCode' } },
-                { kind: 'Field', name: { kind: 'Name', value: 'nonConsolidatedInductoryCode' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'accountingStandard' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'consolidationType' } },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'balanceSheet' },
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'renderable' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'note' } },
                       {
                         kind: 'Field',
-                        name: { kind: 'Name', value: 'amount' },
+                        name: { kind: 'Name', value: 'bars' },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'currentAsset' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'label' } },
                             {
                               kind: 'Field',
-                              name: { kind: 'Name', value: 'propertyPlantAndEquipment' },
+                              name: { kind: 'Name', value: 'segments' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'label' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'signedAmount' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'ratio' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'colorRole' } },
+                                ],
+                              },
                             },
-                            { kind: 'Field', name: { kind: 'Name', value: 'intangibleAsset' } },
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'investmentAndOtherAsset' },
-                            },
-                            { kind: 'Field', name: { kind: 'Name', value: 'currentLiability' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'noncurrentLiability' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'netAsset' } },
-                          ],
-                        },
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'ratio' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'currentAsset' } },
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'propertyPlantAndEquipment' },
-                            },
-                            { kind: 'Field', name: { kind: 'Name', value: 'intangibleAsset' } },
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'investmentAndOtherAsset' },
-                            },
-                            { kind: 'Field', name: { kind: 'Name', value: 'currentLiability' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'noncurrentLiability' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'netAsset' } },
                           ],
                         },
                       },
@@ -222,35 +207,30 @@ export const GetCompanyFinancialStatementsByCodesDocument = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'renderable' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'note' } },
                       {
                         kind: 'Field',
-                        name: { kind: 'Name', value: 'amount' },
+                        name: { kind: 'Name', value: 'bars' },
                         selectionSet: {
                           kind: 'SelectionSet',
                           selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'netSales' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'originalCost' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'label' } },
                             {
                               kind: 'Field',
-                              name: { kind: 'Name', value: 'sellingGeneralExpense' },
+                              name: { kind: 'Name', value: 'segments' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'label' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'signedAmount' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'ratio' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'colorRole' } },
+                                ],
+                              },
                             },
-                            { kind: 'Field', name: { kind: 'Name', value: 'operatingIncome' } },
-                          ],
-                        },
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'ratio' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'Field', name: { kind: 'Name', value: 'netSales' } },
-                            { kind: 'Field', name: { kind: 'Name', value: 'originalCost' } },
-                            {
-                              kind: 'Field',
-                              name: { kind: 'Name', value: 'sellingGeneralExpense' },
-                            },
-                            { kind: 'Field', name: { kind: 'Name', value: 'operatingIncome' } },
                           ],
                         },
                       },
@@ -263,20 +243,21 @@ export const GetCompanyFinancialStatementsByCodesDocument = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
-                      { kind: 'Field', name: { kind: 'Name', value: 'startingCash' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'renderable' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'note' } },
                       {
                         kind: 'Field',
-                        name: { kind: 'Name', value: 'operatingActivitiesCashFlow' },
+                        name: { kind: 'Name', value: 'steps' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'key' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'label' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                          ],
+                        },
                       },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'investingActivitiesCashFlow' },
-                      },
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'financingActivitiesCashFlow' },
-                      },
-                      { kind: 'Field', name: { kind: 'Name', value: 'endingCash' } },
                     ],
                   },
                 },
@@ -287,7 +268,4 @@ export const GetCompanyFinancialStatementsByCodesDocument = {
       },
     },
   ],
-} as unknown as DocumentNode<
-  GetCompanyFinancialStatementsByCodesQuery,
-  GetCompanyFinancialStatementsByCodesQueryVariables
->;
+} as unknown as DocumentNode<FinancialReportsQuery, FinancialReportsQueryVariables>;

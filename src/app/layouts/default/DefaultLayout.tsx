@@ -69,7 +69,10 @@ class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
                   企業比較するなら
                   <Link
                     target="_blank"
-                    href={`https://investee.info/?stock-codes=${this.props.stockCode}`}
+                    rel="noopener noreferrer"
+                    href={`https://investee.info/?stock-codes=${encodeURIComponent(
+                      this.props.stockCode ?? '',
+                    )}`}
                     underline="none"
                   >
                     investee.info
@@ -93,6 +96,7 @@ class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
           出典:
           <Link
             target="_blank"
+            rel="noopener noreferrer"
             href="https://disclosure2.edinet-fsa.go.jp/WEEK0010.aspx"
             underline="none"
           >

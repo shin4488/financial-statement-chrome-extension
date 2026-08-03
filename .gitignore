@@ -24,8 +24,8 @@ dist-firefox-v2
 .env
 /tmp/
 
-# Chrome Web Store 申請用 zip（/release スキルがリポジトリ直下に生成する）
-investee-*.zip
+# Chrome Web Store 申請用 zip の出力先（/release スキルが生成する）
+/release/
 
 # Claude Code（.claude/skills/ はコミット対象、個人設定とworktreeは除外）
 .claude/settings.local.json

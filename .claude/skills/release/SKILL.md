@@ -58,7 +58,7 @@ yarn build
 cd dist && zip -r ../investee-$(node -p "require('../package.json').version").zip . && cd ..
 ```
 
-zip はコミットしない（gitignore 対象外のためリポジトリ直下に置いたままで良いが、`git status` に出ないことを確認する）。
+zip はコミットしない（`investee-*.zip` は gitignore 済みのためリポジトリ直下に置いたままで良い。`git status` に出ないことを確認する）。
 
 ## 5. バージョンアップの反映
 

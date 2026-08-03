@@ -41,7 +41,14 @@ class FinancialStatementList extends React.Component<FinancialStatementListWithS
           {this.props.financialStatementResults.map((statement) => {
             const consolidationTypeLabel =
               statement.consolidationType === 'consolidated' ? '連結' : '単体';
-            const standardLabel = nonJgaapBadge[statement.accountingStandard];
+            // hasOwnPropertyで引く: 素の[]アクセスだとaccountingStandardが"constructor"等のとき
+            // Object.prototypeのメンバーがラベルとして描画されるため
+            const standardLabel = Object.prototype.hasOwnProperty.call(
+              nonJgaapBadge,
+              statement.accountingStandard,
+            )
+              ? nonJgaapBadge[statement.accountingStandard]
+              : undefined;
             const subheaderSuffix = standardLabel
               ? `（${consolidationTypeLabel}・${standardLabel}）`
               : `（${consolidationTypeLabel}）`;
@@ -56,7 +63,10 @@ class FinancialStatementList extends React.Component<FinancialStatementListWithS
                           title={`${statement.companyName}（株探）`}
                           underline="none"
                           target="_blank"
-                          href={`https://kabutan.jp/stock/?code=${statement.stockCode ?? ''}`}
+                          rel="noopener noreferrer"
+                          href={`https://kabutan.jp/stock/?code=${encodeURIComponent(
+                            statement.stockCode ?? '',
+                          )}`}
                         >
                           <span>{statement.companyName}</span>
                         </Link>

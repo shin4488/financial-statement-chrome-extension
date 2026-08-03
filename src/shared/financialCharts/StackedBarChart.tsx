@@ -23,10 +23,12 @@ export function toStackRows(chart: StackChart): {
   const columns: StackColumn[] = [];
   const rows = chart.bars.map((bar) => {
     // __segments: この行のセグメントメタ（実値など）。ツールチップはここから引くため、
-    // フロントは科目辞書を一切持たない
+    // フロントは科目辞書を一切持たない。
+    // Object.create(null): キーがAPI由来のため、"__proto__"等でも
+    // プロトタイプに干渉しない素のマップとして扱う
     const row = {
       name: bar.label,
-      __segments: {} as Record<string, Segment>,
+      __segments: Object.create(null) as Record<string, Segment>,
     } as Row;
     bar.segments.forEach((s) => {
       if (!columns.some((c) => c.key === s.key)) {

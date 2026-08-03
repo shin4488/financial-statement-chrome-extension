@@ -85,4 +85,8 @@ gh release create <version> --title <version> --notes ""
 
 - 作成した zip のパスとバージョン
 - 作成したタグと GitHub Release
-- 残りは人間の作業であること: 実機確認チェックリスト → Chrome Web Store デベロッパーダッシュボードへアップロード → 審査提出（手順は [docs/release.md](../../../docs/release.md)）
+- 残りの人間の作業。ユーザーが docs/release.md を開かずに済むよう、以下をこの形でチャットに表示する:
+  1. 実機確認チェックリスト（[docs/release.md](../../../docs/release.md) 参照）
+  2. [Chrome Web Store デベロッパーダッシュボード](https://chrome.google.com/webstore/devconsole) を開く → 対象アイテム（investee）→「パッケージ」→ 新しいパッケージをアップロード
+     - アップロードするファイルは今回作成した zip（フルパスを明示する）
+  3. 審査に提出

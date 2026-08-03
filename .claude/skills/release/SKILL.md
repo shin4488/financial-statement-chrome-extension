@@ -52,13 +52,13 @@ yarn build
 
 ## 4. 申請用 zip の作成
 
-`manifest.json` が zip のルートに来るように作る:
+`manifest.json` が zip のルートに来るように、`release/` ディレクトリ配下に作る:
 
 ```bash
-cd dist && zip -r ../investee-$(node -p "require('../package.json').version").zip . && cd ..
+mkdir -p release && cd dist && zip -r ../release/investee-$(node -p "require('../package.json').version").zip . && cd ..
 ```
 
-zip はコミットしない（gitignore 対象外のためリポジトリ直下に置いたままで良いが、`git status` に出ないことを確認する）。
+zip はコミットしない（`release/` は gitignore 済みのため置いたままで良い。`git status` に出ないことを確認する）。
 
 ## 5. バージョンアップの反映
 

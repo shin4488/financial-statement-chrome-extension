@@ -1,10 +1,9 @@
 import { CodegenConfig } from '@graphql-codegen/cli';
 
 const config: CodegenConfig = {
-  // financialReportsが本番未デプロイの間は本番introspectionでは型生成できないため、
-  // ローカルdocker（financial-statementリポジトリのappserver）のschemaを指す。
+  // 公開済み拡張が実際に会話する本番APIのschemaを正とする（未デプロイの変更が型に混ざるのを防ぐ）。
   // 生成物は src/__generated__/ にコミットするため、build/CIでは再生成不要
-  schema: 'http://localhost:20000/graphql',
+  schema: 'https://investee.info/api/graphql',
   documents: ['./**/*.graphql'],
   generates: {
     './src/__generated__/': {

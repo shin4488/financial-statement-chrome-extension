@@ -82,7 +82,8 @@ yarn install
 yarn compile
 ```
 
-- スキーマ取得先はローカル docker のバックエンド `http://localhost:20000/graphql`（`codegen.ts`）。**バックエンドの起動が前提**
+- スキーマ取得先は本番 introspection `https://investee.info/api/graphql`（`codegen.ts`）。ローカルバックエンドの起動は不要。
+  バックエンドの変更を先行開発するときだけ一時的に `http://localhost:20000/graphql` へ切り替える
 - 生成物 `src/__generated__/` はコミットする（build / CI では再生成しない）
 - `Money` スカラは `number` として生成される（円単位の金額が JSON 数値で届く）
 

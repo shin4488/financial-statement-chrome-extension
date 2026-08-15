@@ -3,7 +3,7 @@ import {
   FinancialReportsQuery,
   FinancialReportsQueryVariables,
 } from '@/__generated__/graphql';
-import ApolloClientService from '@/app/plugins/apollo/service';
+import ApolloClientService from './apolloClientService';
 import { FinancialStatementResult } from './result';
 
 export default class FinancialStatementService {

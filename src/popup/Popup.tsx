@@ -1,6 +1,6 @@
 import FinancialStatementList from '@/app/features/financialStatementList/FinancialStatementList';
 import DefaultLayout from '@/app/layouts/default/DefaultLayout';
-import { logLoadStatementsEventToAnalytics } from '@/app/plugins/google/analytics';
+import { logLoadStatementsEventToAnalytics } from './analytics';
 import store from '@/app/store';
 
 const Popup = () => {

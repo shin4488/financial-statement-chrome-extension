@@ -19,8 +19,8 @@ investee（https://investee.info）のブラウザ拡張。株式情報サイト
 flowchart LR
     BG["background（src/background/）<br>タブイベント→サイト判定・銘柄コード抽出<br>（stockSite/ + siteClassMapper.ts）"]
     API["GraphQL API<br>本番: investee.info/api/graphql<br>開発ビルド: localhost:20000/graphql"]
-    STORE["Redux store<br>（webext-redux で共有）"]
-    POPUP["popup（src/popup/ → src/app/）<br>FinancialStatementList"]
+    STORE["Redux store（src/store/）<br>webext-redux で共有"]
+    POPUP["popup（src/popup/）<br>FinancialStatementList"]
     KIT["src/shared/financialCharts/<br>StackedBarChart / WaterfallChart / ChartUnavailable"]
     BG -->|"query financialReports"| API
     API -->|"チャート構造"| BG

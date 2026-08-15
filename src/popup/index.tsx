@@ -2,7 +2,7 @@ import '../global.css';
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
-import { proxyStore } from '../app/proxyStore';
+import { proxyStore } from '@/store/proxyStore';
 import Popup from './Popup';
 
 proxyStore.ready().then(() => {
@@ -11,6 +11,6 @@ proxyStore.ready().then(() => {
       <Provider store={proxyStore}>
         <Popup />
       </Provider>
-    </React.StrictMode>
+    </React.StrictMode>,
   );
 });

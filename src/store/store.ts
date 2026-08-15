@@ -13,9 +13,9 @@ import {
 } from 'reduxjs-toolkit-persist';
 import type { WebStorage } from 'reduxjs-toolkit-persist/lib/types';
 
-import autoPlayStatusReducer from '@/app/slices/autoPlayStatusSlice';
-import financialStatementReducer from '@/app/slices/financialStatement';
-import sitePageReducer from '@/app/slices/sitePageSlice';
+import autoPlayStatusReducer from './slices/autoPlayStatusSlice';
+import financialStatementReducer from './slices/financialStatement';
+import sitePageReducer from './slices/sitePageSlice';
 
 const persistConfig = {
   key: 'root',

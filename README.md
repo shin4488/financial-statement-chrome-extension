@@ -38,7 +38,7 @@ flowchart TB
     SVC --> STORE --> LIST --> KIT
 ```
 
-- チャートの科目・積み上げ順・色 role はすべて API が返す。フロントは解釈せず描画するだけの汎用契約（詳細は financial-statement リポジトリの `docs/architecture/04_frontend.md`）
+- チャートの科目・積み上げ順・色 role はすべて API が返す。フロントは解釈せず描画するだけの汎用契約（詳細は financial-statement リポジトリの `docs/guide/05_frontend.md`）
 - 技術スタック: React / TypeScript / Redux Toolkit / Apollo Client / recharts / MUI / Vite / @crxjs/vite-plugin
 
 ## セットアップ

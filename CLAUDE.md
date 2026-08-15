@@ -41,7 +41,7 @@ flowchart LR
 ## 関連リポジトリ・ローカル環境
 
 - financial-statement（通常 `../financial-statement`）: 親リポジトリ + `application/backend`（Rails・submodule）+ `application/frontend`（React・submodule）。`docker compose up` で API が `localhost:20000`、GraphiQL は `http://localhost:20000/graphiql`
-- 設計ドキュメントは financial-statement の `docs/architecture/`（チャート契約は `04_frontend.md`）
+- 設計ドキュメントは financial-statement の `docs/guide/`（README.md が目次。チャート契約は `05_frontend.md`）
 - ローカル動作確認の手順は [README.md](README.md) を参照
 
 ## リリースの順序制約

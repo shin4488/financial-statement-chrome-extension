@@ -1,4 +1,5 @@
 import StringUtil from '@/utils/stringUtil';
+import { extractStockCode } from './stockCode';
 import { StockSite } from './stockSite';
 
 export default class Kabutan implements StockSite {
@@ -15,6 +16,6 @@ export default class Kabutan implements StockSite {
   }
 
   private fetchStockCode(): string {
-    return this.searchParams.get('code') || '';
+    return extractStockCode(this.searchParams.get('code'));
   }
 }

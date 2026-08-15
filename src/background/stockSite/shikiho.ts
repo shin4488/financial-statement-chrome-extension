@@ -1,4 +1,5 @@
 import StringUtil from '@/utils/stringUtil';
+import { extractStockCode, stockCodeSegmentAfter } from './stockCode';
 import { StockSite } from './stockSite';
 
 export default class Shikiho implements StockSite {
@@ -15,6 +16,6 @@ export default class Shikiho implements StockSite {
   }
 
   private replaceForStockCode(): string {
-    return this.pathname.replaceAll(/[^0-9]/gi, '');
+    return extractStockCode(stockCodeSegmentAfter(this.pathname, 'stocks'));
   }
 }

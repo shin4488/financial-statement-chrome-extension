@@ -1,4 +1,5 @@
 import StringUtil from '@/utils/stringUtil';
+import { extractStockCode, stockCodeSegmentAfter } from './stockCode';
 import { StockSite } from './stockSite';
 
 export default class YahooFinance implements StockSite {
@@ -15,6 +16,8 @@ export default class YahooFinance implements StockSite {
   }
 
   private replaceForStockCode(): string {
-    return this.pathname.replaceAll(/[^0-9]/gi, '');
+    // /quote/<証券コード>.<市場サフィックス> 形式。サフィックスを除いた部分がコード
+    const quoteSymbol = stockCodeSegmentAfter(this.pathname, 'quote');
+    return extractStockCode(quoteSymbol.split('.')[0]);
   }
 }

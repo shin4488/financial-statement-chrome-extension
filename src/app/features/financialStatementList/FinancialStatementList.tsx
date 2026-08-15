@@ -5,7 +5,7 @@ import Grid from '@mui/material/Grid2';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
 import CardContent from '@mui/material/CardContent';
-import AppCarousel from '@/app/features/appCarousel/AppCarousel';
+import AppCarousel from './appCarousel/AppCarousel';
 import { StackedBarChart, WaterfallChart } from '@/shared/financialCharts';
 import { RootState } from '@/app/store';
 

@@ -1,4 +1,4 @@
-import StringUtil from '@/app/plugins/utils/stringUtil';
+import StringUtil from '@/utils/stringUtil';
 
 const getOrCreateClientIdasync = async () => {
   const clientIdStorageKey = 'investeeExtensionClientId';

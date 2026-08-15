@@ -1,4 +1,4 @@
-import StringUtil from '@/app/plugins/utils/stringUtil';
+import StringUtil from '@/utils/stringUtil';
 import { StockSite } from './stockSite';
 
 export default class Minkabu implements StockSite {

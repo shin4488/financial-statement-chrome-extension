@@ -3,7 +3,7 @@ import store, { initializeWrappedStore } from '@/app/store';
 import { setResult } from '@/app/slices/financialStatement';
 import { changeSiteDomain, changeStockCode } from '@/app/slices/sitePageSlice';
 import FinancialStatementService from './financialStatement/service';
-import StringUtil from '@/app/plugins/utils/stringUtil';
+import StringUtil from '@/utils/stringUtil';
 import { getValidSiteInstance } from './siteClassMapper';
 import { StockSite } from './stockSite/stockSite';
 

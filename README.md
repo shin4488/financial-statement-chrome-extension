@@ -27,8 +27,8 @@ flowchart TB
         SVC["financialStatement/<br>financialReports クエリ実行"]
     end
     API["GraphQL API<br>本番: investee.info/api/graphql<br>開発ビルド: localhost:20000/graphql"]
-    STORE["Redux store（webext-redux）<br>background と popup で共有"]
-    subgraph pop["ポップアップ（src/popup/ → src/app/）"]
+    STORE["Redux store（src/store/、webext-redux）<br>background と popup で共有"]
+    subgraph pop["ポップアップ（src/popup/）"]
         LIST["FinancialStatementList<br>MUI カード + カルーセル"]
         KIT["共有チャートキット src/shared/financialCharts/<br>StackedBarChart / WaterfallChart / ChartUnavailable"]
     end

@@ -1,7 +1,7 @@
 import browser from 'webextension-polyfill';
-import store, { initializeWrappedStore } from '@/app/store';
-import { setResult } from '@/app/slices/financialStatement';
-import { changeSiteDomain, changeStockCode } from '@/app/slices/sitePageSlice';
+import store, { initializeWrappedStore } from '@/store/store';
+import { setResult } from '@/store/slices/financialStatement';
+import { changeSiteDomain, changeStockCode } from '@/store/slices/sitePageSlice';
 import FinancialStatementService from './financialStatement/service';
 import StringUtil from '@/utils/stringUtil';
 import { getValidSiteInstance } from './siteClassMapper';

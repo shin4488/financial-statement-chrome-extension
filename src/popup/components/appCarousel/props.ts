@@ -1,4 +1,4 @@
-import { childrenComponentType } from '@/app/constants/types';
+import { childrenComponentType } from '@/popup/types';
 
 export interface AppCarouselProps {
   children: childrenComponentType;

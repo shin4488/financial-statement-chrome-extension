@@ -1,7 +1,7 @@
-import FinancialStatementList from '@/app/features/financialStatementList/FinancialStatementList';
-import DefaultLayout from '@/app/layouts/default/DefaultLayout';
+import FinancialStatementList from './components/FinancialStatementList';
+import DefaultLayout from './components/defaultLayout/DefaultLayout';
 import { logLoadStatementsEventToAnalytics } from './analytics';
-import store from '@/app/store';
+import store from '@/store/store';
 
 const Popup = () => {
   // 開いた時点のページに関する情報をGoogleアナリティクスへ送信

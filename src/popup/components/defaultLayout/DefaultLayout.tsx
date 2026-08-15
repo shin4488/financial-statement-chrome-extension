@@ -12,9 +12,9 @@ import {
   Typography,
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
-import { AppDispatch } from '@/app/store';
-import { RootState } from '@/app/store';
-import { changeAutoPlayStatus } from '@/app/slices/autoPlayStatusSlice';
+import { AppDispatch } from '@/store/store';
+import { RootState } from '@/store/store';
+import { changeAutoPlayStatus } from '@/store/slices/autoPlayStatusSlice';
 import { bindActionCreators } from '@reduxjs/toolkit';
 
 const autoPlayStatusLocalStorageKey = 'investeeExtensionIsStatementAutoPlay';

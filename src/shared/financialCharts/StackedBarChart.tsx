@@ -2,6 +2,7 @@ import React from 'react';
 import { Bar, BarChart, LabelList, ResponsiveContainer, Tooltip, YAxis } from 'recharts';
 import { colorForRole, stackLabelColor } from './colorRoles';
 import { ChartUnavailable } from './ChartUnavailable';
+import { formatAmount } from './formatAmount';
 import type { StackChart, Segment } from './types';
 
 // rechartsは「行の配列 * 固定dataKey」を要求するが、こちらは「バーごとに異なるセグメント列」を
@@ -79,7 +80,7 @@ export function StackedBarChart({ chart, width = '90%', height = 400 }: StackedB
               return [null, null];
             }
             // 表示はsignedAmount: 債務超過の純資産や損失は負で見せる
-            return [`${s.signedAmount.toLocaleString()}円`, s.label];
+            return [formatAmount(s.signedAmount), s.label];
           }}
         />
         {columns.map(({ key, label, colorRole }) => (

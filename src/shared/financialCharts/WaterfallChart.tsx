@@ -10,6 +10,7 @@ import {
   YAxis,
 } from 'recharts';
 import { ChartUnavailable } from './ChartUnavailable';
+import { formatAmount } from './formatAmount';
 import type { WaterfallChart as WaterfallChartData, WaterfallStep } from './types';
 
 const POSITIVE_COLOR = '#A1C2F1';
@@ -58,15 +59,9 @@ export interface WaterfallChartProps {
   chart: WaterfallChartData;
   width?: string | number;
   height?: string | number;
-  unit?: string;
 }
 
-export function WaterfallChart({
-  chart,
-  width = '90%',
-  height = 400,
-  unit = '円',
-}: WaterfallChartProps) {
+export function WaterfallChart({ chart, width = '90%', height = 400 }: WaterfallChartProps) {
   if (!chart.renderable) {
     return <ChartUnavailable note={chart.note} />;
   }
@@ -99,15 +94,16 @@ export function WaterfallChart({
             if (!row) {
               return null;
             }
-            return <div>{`${p.label}: ${row.value.toLocaleString()}${unit}`}</div>;
+            return <div>{`${p.label}: ${formatAmount(row.value)}`}</div>;
           }}
         />
         <Bar dataKey="base" stackId="w" fill="transparent" isAnimationActive={false} />
         <Bar dataKey="span" stackId="w" isAnimationActive={false}>
+          {/* バー上のラベルもツールチップと同じ単位（百万円）で出す。円のままだと桁が多く重なって読めない */}
           <LabelList
             dataKey="value"
             position="top"
-            formatter={(value: number) => value.toLocaleString()}
+            formatter={(value: number) => formatAmount(value)}
           />
           {rows.map((row) => (
             <Cell key={row.step.key} fill={row.value < 0 ? NEGATIVE_COLOR : POSITIVE_COLOR} />

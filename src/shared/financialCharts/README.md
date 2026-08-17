@@ -36,5 +36,6 @@ Web フロントとブラウザ拡張（financial-statement-chrome-extension）�
 
 - `renderable: false` は正常系（未対応形式・データ欠落）。`note` を代替表示する
 - `amount` は描画高さ（常に 0 以上）、`signedAmount` が実値（ツールチップ用）
+- 金額の表示は `formatAmount`（百万円単位・百万円未満切捨て。百万円未満の値は千円単位）に統一する。API の金額は円のまま
 - `colorRole` は意味ベースの色 enum。新しい role が増えたときだけ `colorRoles.ts` に 1 行追加する
 - セグメントの並び順・ラベルは API の配列順序が契約。フロントで並べ替え・翻訳をしない

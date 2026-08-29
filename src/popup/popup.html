@@ -6,14 +6,22 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Popup</title>
     <style>
-      /* ポップアップ窓の幅。JS適用（Reactマウント後）だと未スタイルな一瞬を
-         Chromeが実寸とみなして窓幅を最大の800pxで確定してしまうため、
-         読み込み時点で効く静的CSSで指定する（高さは内容に応じてChromeが決める）。
-         htmlには当てない: htmlを固定幅にするとChromeが窓幅に縦スクロールバー分を
-         足してしまい、右側に常に隙間ができる */
+      /* ポップアップ窓のサイズはここで完全に固定する（幅28rem × 高さ600px=Chromeの上限）。
+         Chromeは文書の希望サイズから窓サイズを推定するが、その推定に任せると
+         ・スタイル適用前の一瞬やカルーセル内部の帯を実寸とみなして窓幅が上限800pxに張り付く
+         ・文書自体が縦スクロールすると窓幅にスクロールバー分が足されて右に隙間ができる
+         という2つの事故が起きる。窓サイズをhtmlで固定し、スクロールはbodyの内側に
+         閉じ込めることで、推定を一切働かせない */
+      html {
+        width: 28rem;
+        height: 600px;
+        overflow: hidden;
+      }
       body {
         width: 28rem;
+        height: 600px;
         margin: 0;
+        overflow-y: auto;
       }
     </style>
   </head>

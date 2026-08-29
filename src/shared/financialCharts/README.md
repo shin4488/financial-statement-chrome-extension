@@ -14,12 +14,13 @@
 
 Web フロントとブラウザ拡張（financial-statement-chrome-extension）で同一実装を使う想定のため:
 
-- import してよいのは `react` と `recharts` のみ（両リポジトリ共通の依存）
+- import してよいのは `react` と `recharts` のみ（両リポジトリ共通の依存。`*.test.ts` は jest 前提）
 - アプリ固有のもの（GraphQL クライアント・codegen 生成型・ルーティング・状態管理・
   パスエイリアス `@/`）に依存しない。ディレクトリ内は相対 import のみ
 - 型は `types.ts` の構造的型で受ける。codegen 生成型はフィールド構造が一致するため
   変換なしでそのまま渡せる
-- スタイルはコンポーネント内で完結させる（外部 CSS を要求しない）
+- スタイルはコンポーネント内で完結させる（外部 CSS を要求しない）。例外は中央寄せの
+  `.bar-container` クラスだけで、コピー先のアプリ側 CSS にも同じ定義が必要
 
 ## 拡張側への展開手順（コピー運用のドリフト対策）
 
@@ -35,7 +36,9 @@ Web フロントとブラウザ拡張（financial-statement-chrome-extension）�
 ## 契約のポイント
 
 - `renderable: false` は正常系（未対応形式・データ欠落）。`note` を代替表示する
-- `amount` は描画高さ（常に 0 以上）、`signedAmount` が実値（ツールチップ用）
+- StackChart の `Segment` は `amount` が描画高さ（常に 0 以上）、`signedAmount` が実値（ツールチップ用）。
+  WaterfallChart の `WaterfallStep.amount` は符号付きの実値（増減の向きそのものが情報のため）
 - 金額の表示は `formatAmount`（百万円単位・百万円未満切捨て。百万円未満の値は千円単位）に統一する。API の金額は円のまま
-- `colorRole` は意味ベースの色 enum。新しい role が増えたときだけ `colorRoles.ts` に 1 行追加する
+- `colorRole` は意味ベースの色の役割名。新しい role が増えたときだけ `colorRoles.ts` に 1 行追加する。
+  ウォーターフォールだけは例外で、role を使わず増減の符号で塗る（色の定義は同じ `colorRoles.ts` にある）
 - セグメントの並び順・ラベルは API の配列順序が契約。フロントで並べ替え・翻訳をしない

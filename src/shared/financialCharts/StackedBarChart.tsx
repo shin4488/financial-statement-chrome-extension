@@ -1,6 +1,6 @@
 import React from 'react';
 import { Bar, BarChart, LabelList, ResponsiveContainer, Tooltip, YAxis } from 'recharts';
-import { colorForRole, stackLabelColor } from './colorRoles';
+import { colorForRole, hiddenRoles, stackLabelColor, tooltipBackgroundColor } from './colorRoles';
 import { ChartUnavailable } from './ChartUnavailable';
 import { formatAmount } from './formatAmount';
 import type { StackChart, Segment } from './types';
@@ -25,8 +25,8 @@ export function toStackRows(chart: StackChart): {
   const rows = chart.bars.map((bar) => {
     // __segments: この行のセグメントメタ（実値など）。ツールチップはここから引くため、
     // フロントは科目辞書を一切持たない。
-    // Object.create(null): キーがAPI由来のため、"__proto__"等でも
-    // プロトタイプに干渉しない素のマップとして扱う
+    // Object.create(null): キーがAPI由来のため、メタの持ち場所は"__proto__"等でも
+    // プロトタイプに干渉しない素のマップにする（row本体の列は値が数値だけなので干渉の実害がない）
     const row = {
       name: bar.label,
       __segments: Object.create(null) as Record<string, Segment>,
@@ -58,7 +58,8 @@ export interface StackedBarChartProps {
 
 export function StackedBarChart({ chart, width = '90%', height = 400 }: StackedBarChartProps) {
   if (!chart.renderable) {
-    return <ChartUnavailable note={chart.note} />;
+    // カルーセル内でチャートと差し替わるため、サイズを揃えてスライド切替時のレイアウト跳ねを防ぐ
+    return <ChartUnavailable note={chart.note} width={width} height={height} />;
   }
   const { rows, columns } = toStackRows(chart);
 
@@ -70,13 +71,15 @@ export function StackedBarChart({ chart, width = '90%', height = 400 }: StackedB
         <YAxis reversed hide domain={[0, 'dataMax']} />
         <Tooltip
           cursor={false}
-          wrapperStyle={{ backgroundColor: '#F6F4EB', textAlign: 'left' }}
+          wrapperStyle={{
+            backgroundColor: tooltipBackgroundColor,
+            textAlign: 'left',
+          }}
           labelFormatter={() => ''} // 行インデックスが出てしまうため空に
           formatter={(_value: unknown, key: unknown, item: unknown) => {
             const payload = (item as { payload?: Row } | undefined)?.payload;
             const s: Segment | undefined = payload?.__segments?.[key as string];
-            // spacerはユーザーに見せる情報ではないのでツールチップから隠す
-            if (!s || s.colorRole === 'spacer') {
+            if (!s || hiddenRoles.has(s.colorRole)) {
               return [null, null];
             }
             // 表示はsignedAmount: 債務超過の純資産や損失は負で見せる

@@ -40,5 +40,6 @@ Web フロントとブラウザ拡張（financial-statement-chrome-extension）�
   WaterfallChart の `WaterfallStep.amount` は符号付きの実値（増減の向きそのものが情報のため）
 - 金額の表示は `formatAmount`（百万円単位・百万円未満切捨て。百万円未満の値は千円単位）に統一する。API の金額は円のまま
 - `colorRole` は意味ベースの色の役割名。新しい role が増えたときだけ `colorRoles.ts` に 1 行追加する。
-  ウォーターフォールだけは例外で、role を使わず増減の符号で塗る（色の定義は同じ `colorRoles.ts` にある）
+  ウォーターフォールも API が `WaterfallStep.colorRole`（cashIncrease / cashDecrease）で指定する。
+  フィールドを取得しない古い呼び出し元では符号から同じ role を補う（後方互換）
 - セグメントの並び順・ラベルは API の配列順序が契約。フロントで並べ替え・翻訳をしない

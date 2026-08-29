@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Popup</title>
+    <style>
+      /* ポップアップ窓の幅。JS適用（Reactマウント後）だと未スタイルな一瞬を
+         Chromeが実寸とみなして窓幅を最大の800pxで確定してしまうため、
+         読み込み時点で効く静的CSSで指定する（高さは内容に応じてChromeが決める） */
+      html,
+      body {
+        width: 28rem;
+        margin: 0;
+      }
+    </style>
   </head>
 
   <body>

@@ -8,8 +8,8 @@ const Popup = () => {
   const sitePage = store.getState().sitePage;
   logLoadStatementsEventToAnalytics(sitePage.siteDomain, sitePage.stockCode);
 
-  // ポップアップ画面の大きさの定義
-  document.body.className = 'w-[28rem] h-[15rem]';
+  // ポップアップ画面の大きさはpopup.htmlの静的CSSで定義する（ここでbodyに当てると
+  // JS実行までの未スタイルな一瞬をChromeが実寸とみなし、窓幅が最大の800pxで固定されることがある）
 
   return (
     <DefaultLayout>

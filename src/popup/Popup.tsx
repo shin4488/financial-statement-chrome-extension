@@ -9,7 +9,7 @@ const Popup = () => {
   logLoadStatementsEventToAnalytics(sitePage.siteDomain, sitePage.stockCode);
 
   // ポップアップ画面の大きさの定義
-  document.body.className = 'w-[31rem] h-[15rem]';
+  document.body.className = 'w-[28rem] h-[15rem]';
 
   return (
     <DefaultLayout>

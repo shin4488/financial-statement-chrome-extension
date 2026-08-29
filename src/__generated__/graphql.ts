@@ -57,6 +57,7 @@ export type FinancialReportsQuery = {
           signedAmount: number;
           ratio?: number | null;
           colorRole: string;
+          tooltipLabel?: string | null;
         }>;
       }>;
     };
@@ -75,6 +76,7 @@ export type FinancialReportsQuery = {
           signedAmount: number;
           ratio?: number | null;
           colorRole: string;
+          tooltipLabel?: string | null;
         }>;
       }>;
     };
@@ -88,6 +90,7 @@ export type FinancialReportsQuery = {
         label: string;
         amount: number;
         kind: string;
+        colorRole: string;
       }>;
     };
   }>;
@@ -173,6 +176,7 @@ export const FinancialReportsDocument = {
                                   { kind: 'Field', name: { kind: 'Name', value: 'signedAmount' } },
                                   { kind: 'Field', name: { kind: 'Name', value: 'ratio' } },
                                   { kind: 'Field', name: { kind: 'Name', value: 'colorRole' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'tooltipLabel' } },
                                 ],
                               },
                             },
@@ -209,6 +213,7 @@ export const FinancialReportsDocument = {
                                   { kind: 'Field', name: { kind: 'Name', value: 'signedAmount' } },
                                   { kind: 'Field', name: { kind: 'Name', value: 'ratio' } },
                                   { kind: 'Field', name: { kind: 'Name', value: 'colorRole' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'tooltipLabel' } },
                                 ],
                               },
                             },
@@ -236,6 +241,7 @@ export const FinancialReportsDocument = {
                             { kind: 'Field', name: { kind: 'Name', value: 'label' } },
                             { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                             { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'colorRole' } },
                           ],
                         },
                       },

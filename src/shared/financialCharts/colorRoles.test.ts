@@ -28,3 +28,10 @@ describe('hiddenRoles', () => {
     expect(hiddenRoles.has('spacer')).toBe(true);
   });
 });
+
+describe('colorByRole', () => {
+  it('ウォーターフォールの増減role（cashIncrease / cashDecrease）も同じマップで管理する', () => {
+    expect(colorByRole.cashIncrease).toMatch(/^#/);
+    expect(colorByRole.cashDecrease).toMatch(/^#/);
+  });
+});

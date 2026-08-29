@@ -10,6 +10,9 @@ export interface Segment {
   signedAmount: number; // 実値。ツールチップはこちらを表示（赤字は負で届く）
   ratio?: number | null; // %。null/undefinedは「表示しない」（spacer等）
   colorRole: string; // colorRoles.tsのキー
+  // ツールチップ専用の表示名（補足つき）。無ければlabelを表示する。
+  // optionalなのはフィールド追加前のAPI・古いクエリの呼び出し元でも動かすため
+  tooltipLabel?: string | null;
 }
 
 export interface StackBar {
@@ -28,6 +31,9 @@ export interface WaterfallStep {
   label: string;
   amount: number; // こちらは符号付き（増減をそのまま表す）
   kind: string; // 'balance'=残高（0起点） / 'flow'=増減（累積位置から浮かせる）
+  // 'cashIncrease' | 'cashDecrease'。optionalなのはフィールド追加前のAPI・古いクエリの
+  // 呼び出し元（コピー先の拡張など）でも動かすため。無ければ符号から補う
+  colorRole?: string | null;
 }
 
 export interface WaterfallChart {

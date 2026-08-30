@@ -69,14 +69,27 @@ zip はコミットしない（`release/` は gitignore 済みのため置いた
 ## 6. タグと GitHub Release の作成（PR マージ後）
 
 バージョンアップ PR が main にマージされたことを確認してから実行する。
-**命名は既存の慣例に従う: タグ名・Release 名ともバージョン番号そのまま（例: `1.0.2`。`v` プレフィックスなし）。本文は空。**
+**命名は既存の慣例に従う: タグ名・Release 名ともバージョン番号そのまま（例: `1.0.2`。`v` プレフィックスなし）。**
+
+本文には前回タグからの変更点を**簡潔な英語の箇条書き**で書く。ストアの審査履歴と突き合わせて
+「どの版で何が変わったか」を後から追えるようにするため（1.2.4 以前は空だが以降は必ず書く）。
+変更点は前回タグ以降のマージ済み PR から拾う:
+
+```bash
+git fetch --tags && git log $(git describe --tags --abbrev=0 origin/main)..origin/main --oneline --merges
+```
+
+機密（キー・実値・本番の接続情報）は書かない。リリースは公開情報。
 
 ```bash
 git fetch origin && git tag <version> origin/main && git push origin <version>
 ```
 
+本文はファイルに書いて `--notes-file` で渡す（複数行を `--notes` に直接埋めると
+シェルのクォート次第で壊れるため）:
+
 ```bash
-gh release create <version> --title <version> --notes ""
+gh release create <version> --title <version> --notes-file <本文を書いたファイル>
 ```
 
 ## 7. 完了報告

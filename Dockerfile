@@ -7,8 +7,6 @@ RUN apt update &&\
     curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash - &&\
     apt install -y nodejs &&\
     npm install -g yarn
-# Docker使用時でも、Reactのホットリロードを有効とするため
-ENV WDS_SOCKET_PORT 0
 
 WORKDIR /home/app/financialStatementChromeExtention
 

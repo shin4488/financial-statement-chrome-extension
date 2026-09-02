@@ -21,6 +21,9 @@
   "plugins": ["@typescript-eslint", "prettier", "react", "react-hooks"],
   "rules": {
     "react/react-in-jsx-scope": "off",
+    // propsの型はTypeScriptで担保する。このルールはReturnType<typeof mapStateToProps>のような
+    // 計算された型を解決できず誤検知するため無効化する
+    "react/prop-types": "off",
     "prettier/prettier": 0,
     "no-console": "warn",
     "no-extra-semi": "warn",

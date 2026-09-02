@@ -2,7 +2,7 @@ import { crx } from '@crxjs/vite-plugin';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 import { defineConfig, loadEnv } from 'vite';
-import manifest from './src/manifest';
+import manifest from './src/manifest.mts';
 
 export default defineConfig((config) => {
   const env = loadEnv(config.mode, process.cwd());
@@ -25,11 +25,13 @@ export default defineConfig((config) => {
       host: true,
     },
     // prevent src/ prefix on extension urls
-    root: resolve(__dirname, 'src'),
-    publicDir: resolve(__dirname, 'public'),
+    root: resolve(import.meta.dirname, 'src'),
+    publicDir: resolve(import.meta.dirname, 'public'),
     build: {
-      outDir: resolve(__dirname, 'dist'),
-      rollupOptions: {
+      outDir: resolve(import.meta.dirname, 'dist'),
+      // root が src のため outDir がプロジェクトルート外扱いになり、明示しないと毎回警告が出る
+      emptyOutDir: true,
+      rolldownOptions: {
         output: {
           chunkFileNames: 'assets/chunk-[hash].js',
         },
@@ -37,7 +39,7 @@ export default defineConfig((config) => {
     },
     resolve: {
       alias: {
-        '@': resolve(__dirname, 'src'),
+        '@': resolve(import.meta.dirname, 'src'),
       },
     },
     plugins: [react(), crx({ manifest })],

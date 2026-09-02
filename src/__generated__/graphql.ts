@@ -1,97 +1,60 @@
 /* eslint-disable */
-import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
-export type Maybe<T> = T | null;
-export type InputMaybe<T> = Maybe<T>;
-export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
-export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = {
-  [_ in K]?: never;
-};
+/** Internal type. DO NOT USE DIRECTLY. */
+type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
+/** Internal type. DO NOT USE DIRECTLY. */
 export type Incremental<T> =
   | T
   | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
-/** All built-in and custom scalars, mapped to their actual values */
-export type Scalars = {
-  ID: { input: string; output: string };
-  String: { input: string; output: string };
-  Boolean: { input: boolean; output: boolean };
-  Int: { input: number; output: number };
-  Float: { input: number; output: number };
-  /** 円単位の金額。Int32の範囲を超え得るがJSON上は数値のまま返す */
-  Money: { input: number; output: number };
-};
-
-export enum CashFlowSign {
-  Negative = 'NEGATIVE',
-  Positive = 'POSITIVE',
-}
-
+import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type FinancialReportsQueryVariables = Exact<{
-  stockCodes?: InputMaybe<Array<Scalars['String']['input']> | Scalars['String']['input']>;
+  stockCodes?: Array<string> | string | null | undefined;
 }>;
 
 export type FinancialReportsQuery = {
-  __typename?: 'Query';
   financialReports: Array<{
-    __typename?: 'FinancialReport';
     id: string;
-    stockCode?: string | null;
-    companyName?: string | null;
+    stockCode: string | null;
+    companyName: string | null;
     fiscalYearStartDate: string;
     fiscalYearEndDate: string;
     accountingStandard: string;
     consolidationType: string;
     balanceSheet: {
-      __typename?: 'StackChart';
       renderable: boolean;
-      note?: string | null;
+      note: string | null;
       bars: Array<{
-        __typename?: 'StackBar';
         label: string;
         segments: Array<{
-          __typename?: 'Segment';
           key: string;
           label: string;
           amount: number;
           signedAmount: number;
-          ratio?: number | null;
+          ratio: number | null;
           colorRole: string;
-          tooltipLabel?: string | null;
+          tooltipLabel: string | null;
         }>;
       }>;
     };
     profitLoss: {
-      __typename?: 'StackChart';
       renderable: boolean;
-      note?: string | null;
+      note: string | null;
       bars: Array<{
-        __typename?: 'StackBar';
         label: string;
         segments: Array<{
-          __typename?: 'Segment';
           key: string;
           label: string;
           amount: number;
           signedAmount: number;
-          ratio?: number | null;
+          ratio: number | null;
           colorRole: string;
-          tooltipLabel?: string | null;
+          tooltipLabel: string | null;
         }>;
       }>;
     };
     cashFlow: {
-      __typename?: 'WaterfallChart';
       renderable: boolean;
-      note?: string | null;
-      steps: Array<{
-        __typename?: 'WaterfallStep';
-        key: string;
-        label: string;
-        amount: number;
-        kind: string;
-        colorRole: string;
-      }>;
+      note: string | null;
+      steps: Array<{ key: string; label: string; amount: number; kind: string; colorRole: string }>;
     };
   }>;
 };

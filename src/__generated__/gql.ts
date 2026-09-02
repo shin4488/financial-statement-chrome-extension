@@ -13,7 +13,10 @@ import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/
  * Therefore it is highly recommended to use the babel or swc plugin for production.
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
-const documents = {
+type Documents = {
+  'query FinancialReports($stockCodes: [String!]) {\n  financialReports(limit: 100, offset: 0, stockCodes: $stockCodes) {\n    id\n    stockCode\n    companyName\n    fiscalYearStartDate\n    fiscalYearEndDate\n    accountingStandard\n    consolidationType\n    balanceSheet {\n      renderable\n      note\n      bars {\n        label\n        segments {\n          key\n          label\n          amount\n          signedAmount\n          ratio\n          colorRole\n          tooltipLabel\n        }\n      }\n    }\n    profitLoss {\n      renderable\n      note\n      bars {\n        label\n        segments {\n          key\n          label\n          amount\n          signedAmount\n          ratio\n          colorRole\n          tooltipLabel\n        }\n      }\n    }\n    cashFlow {\n      renderable\n      note\n      steps {\n        key\n        label\n        amount\n        kind\n        colorRole\n      }\n    }\n  }\n}': typeof types.FinancialReportsDocument;
+};
+const documents: Documents = {
   'query FinancialReports($stockCodes: [String!]) {\n  financialReports(limit: 100, offset: 0, stockCodes: $stockCodes) {\n    id\n    stockCode\n    companyName\n    fiscalYearStartDate\n    fiscalYearEndDate\n    accountingStandard\n    consolidationType\n    balanceSheet {\n      renderable\n      note\n      bars {\n        label\n        segments {\n          key\n          label\n          amount\n          signedAmount\n          ratio\n          colorRole\n          tooltipLabel\n        }\n      }\n    }\n    profitLoss {\n      renderable\n      note\n      bars {\n        label\n        segments {\n          key\n          label\n          amount\n          signedAmount\n          ratio\n          colorRole\n          tooltipLabel\n        }\n      }\n    }\n    cashFlow {\n      renderable\n      note\n      steps {\n        key\n        label\n        amount\n        kind\n        colorRole\n      }\n    }\n  }\n}':
     types.FinancialReportsDocument,
 };

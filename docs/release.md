@@ -8,16 +8,77 @@
 
 拡張はビルド時点のクエリを本番 API に投げるため、API 側に存在しないクエリ・フィールドを使う拡張を先に公開すると、公開済み拡張の表示が壊れる。逆順は不可。
 
-## エージェントで実行する部分（`/release` スキル）
+## エージェントで実行する部分
 
-リリース準備の機械的な作業は Claude Code のスキル [.claude/skills/release/SKILL.md](../.claude/skills/release/SKILL.md) に任せる。Claude Code で `/release` を実行すると、以下を行う:
+[agent-plugins](https://github.com/shin4488/agent-plugins) の共通 `release` skill を使う。この文書には拡張固有のコマンドと規約を置く。以下の前提や検証が失敗したら、次の工程に進まず理由を報告する。
 
-1. 本番 API が `financialReports` に応答することの事前確認（未デプロイなら中断）
-2. `package.json` のバージョンアップ（上げ幅は対話で確認: 機能変更 = minor / 修正のみ = patch）
-3. クリーン検証（`yarn install --frozen-lockfile` → `yarn lint` → `yarn test`）と本番ビルド（`yarn build`）
-4. ビルド成果物の検査（`[Dev]` が付いていない・version 反映・host_permissions が本番のみ）
-5. Chrome Web Store 申請用 zip の作成と、バージョンアップ PR の作成
-6. バージョンアップ PR のマージ後、タグと GitHub Release の作成（命名は既存の慣例に従いバージョン番号そのまま。例: `1.0.2`）
+### 1. 本番 API と作業状態を確認する
+
+```bash
+curl --fail-with-body -sS -X POST https://investee.info/api/graphql \
+  -H 'Content-Type: application/json' \
+  --data '{"query":"{ financialReports(limit: 1, offset: 0) { stockCode companyName } }"}'
+```
+
+通信成功だけでなく、応答に `errors` がなく `financialReports` が返ることを確認する。新しいクエリを含む場合は、そのクエリも本番に対応済みであることを確認する。`git fetch` 後の最新 `origin/main` を基点にし、作業ツリーの無関係な変更を含めない。
+
+### 2. バージョンを更新する
+
+- 機能・画面変更は minor、不具合修正だけなら patch を上げる。版番号を提案してユーザーに確認する。既に承認済みなら再確認不要。
+- 変更するのは `package.json` の `version`。manifest にはビルド時に反映される。
+- タグ名・Release 名はバージョン番号そのまま（例: `1.0.2`）。`v` や `release-` は付けない。
+
+### 3. クリーン検証と本番ビルドを行う
+
+```bash
+yarn install --frozen-lockfile
+yarn lint
+yarn test
+yarn build
+```
+
+各コマンドの成功を確認してから次へ進む。`dist/manifest.json` では以下を確認する。
+
+| 項目               | 条件                                                 |
+| ------------------ | ---------------------------------------------------- |
+| `name`             | `[Dev]` が付いていない                               |
+| `version`          | 更新した `package.json` と一致する                   |
+| `host_permissions` | `https://investee.info/*` のみ。localhost を含まない |
+
+### 4. 申請用 zip とバージョン変更 PR を作る
+
+リポジトリルートから実行する。`manifest.json` が zip 直下になるようにする。
+
+```bash
+mkdir -p release
+version=$(node -p "require('./package.json').version")
+(cd dist && zip -r "../release/investee-$version.zip" .)
+```
+
+既存の同名 zip がある場合は、古いファイルが残らないよう新規アーカイブとして作り直す。zip の内容と `manifest.json` を確認する。
+
+- `release/` とビルド成果物はコミットしない。`git status` で確認する。
+- バージョン変更は `package.json` と、更新が必要だった場合の `yarn.lock` をコミットする。メッセージは `change:` で始まる英語 1 行。
+- PR 経由で main へ反映し、マージはユーザーが行う。マージ前にタグを作成しない。
+
+### 5. PR マージ後にタグ・GitHub Release を作る
+
+最新の `origin/main` へのマージを確認し、公開対象 SHA を確定する。zip とその SHA のソース・依存・ビルド条件を照合し、差があれば手順 3〜4 で再作成する。
+
+前回リリース以降の変更を、簡潔な英語の箇条書きにする。キー・秘密の接続情報を含めず、本文はファイルに書く。
+
+共通 `release` skill の手順で対象 SHA のタグを作成・push し、リモートのタグを確認してから公開する。
+
+```bash
+gh release create <version> --verify-tag --title <version> --notes-file <ノートファイル>
+gh release view <version>
+```
+
+作成済みタグは SHA を照合し、削除・付け替えしない。GitHub Release 作成後も、以下のストア申請は人間が行う。
+
+### 6. 結果と人間の作業を案内する
+
+版番号・zip の絶対パス・タグ・Release の URL を報告する。下の実機チェックリストと、Chrome Web Store ダッシュボードの「パッケージ」から今回の zip をアップロードして審査に提出する手順を、チャットにも表示する。
 
 ## 人間が行う部分
 

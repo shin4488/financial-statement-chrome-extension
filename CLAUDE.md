@@ -55,4 +55,6 @@ flowchart LR
 
 ## Claude Code と Codex
 
-`AGENTS.md` はこのファイル、`.agents/skills` は `.claude/skills` への相対シンボリックリンク。共通の指示・skill は Claude 側の実体を編集する。
+- `AGENTS.md` はこのファイルへの相対シンボリックリンク。
+- `.agents/skills` は `.claude/skills` への相対シンボリックリンク。
+- 共通の指示・skill は Claude 側の実体を編集する。

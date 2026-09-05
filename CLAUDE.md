@@ -52,3 +52,7 @@ flowchart LR
 
 - ブランド版 Chrome 137+ は `--load-extension` フラグを無視する。自動 E2E には Chrome for Testing（`npx @puppeteer/browsers install chrome@stable`）+ puppeteer-core を使う
 - ポップアップは `chrome-extension://<拡張ID>/popup/popup.html` をタブとして開いても検証できる（proxyStore 経由で background のデータが届く）。カルーセルの自動再生は localStorage `investeeExtensionIsStatementAutoPlay=false` で停止できる
+
+## Claude Code と Codex
+
+`AGENTS.md` はこのファイル、`.agents/skills` は `.claude/skills` への相対シンボリックリンク。共通の指示・skill は Claude 側の実体を編集する。

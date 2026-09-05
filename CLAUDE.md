@@ -48,7 +48,7 @@ flowchart LR
 
 バックエンドの `financialReports` 本番デプロイ → 本番 API で動作確認 → version up → `yarn build` → ストア申請。順序が逆だと、公開済み拡張が本番に存在しないクエリを投げて表示が壊れる。
 
-共通 `release` skillを使い、この拡張固有のコマンド・版番号・確認項目は [docs/release.md](docs/release.md) に従う。
+共通 `release` skill を使い、この拡張固有のコマンド・版番号・確認項目は [docs/release.md](docs/release.md) に従う。
 
 ## 実機 E2E のヒント
 
@@ -58,6 +58,6 @@ flowchart LR
 ## Claude Code と Codex
 
 - `AGENTS.md` はこのファイルへの相対シンボリックリンク。
-- `make setup` で、導入済みのClaude・Codexに [agent-plugins](https://github.com/shin4488/agent-plugins) をユーザー単位でインストールする。共通skillの実体はプラグイン側で編集する。
-- 導入後はツールを読み込み直す。hookを使う場合はリポジトリを信頼し、Codexの `/hooks` で確認・承認する（[手順](https://learn.chatgpt.com/docs/hooks)）。
-- この拡張はESLint・Prettierを使い、Biome設定はないため共通hookのBiome処理は適用されない。既存のlint・ビルド手順を使う。
+- `make setup` で、導入済みの Claude・Codex に [agent-plugins](https://github.com/shin4488/agent-plugins) をユーザー単位でインストールする。共通 skill の実体はプラグイン側で編集する。
+- 導入後はツールを読み込み直す。hook を使う場合はリポジトリを信頼し、Codex の `/hooks` で確認・承認する（[手順](https://learn.chatgpt.com/docs/hooks)）。
+- この拡張は ESLint・Prettier を使い、Biome 設定はないため共通 hook の Biome 処理は適用されない。既存の lint・ビルド手順を使う。

@@ -10,22 +10,12 @@ investee（https://investee.info）のブラウザ拡張。株式情報サイト
 | 開発ビルド（ローカル API 接続） | `npx vite build --mode development`                |
 | HMR 開発                        | `yarn dev`（dev サーバ起動中のみ動く成果物になる） |
 | 本番ビルド                      | `yarn build`（tsc + vite + Firefox MV2 変換）      |
-| GraphQL 型生成                  | `yarn compile`（ローカル docker バックエンド必須） |
+| GraphQL 型生成                  | `yarn compile`（`codegen.ts` の schema を参照）    |
 | lint / 型チェック / テスト      | `yarn lint` / `yarn lint:type` / `yarn test`       |
 
 ## アーキテクチャ
 
-```mermaid
-flowchart LR
-    BG["background（src/background/）<br>タブイベント→サイト判定・銘柄コード抽出<br>（stockSite/ + siteClassMapper.ts）"]
-    API["GraphQL API<br>本番: investee.info/api/graphql<br>開発ビルド: localhost:20000/graphql"]
-    STORE["Redux store（src/store/）<br>webext-redux で共有"]
-    POPUP["popup（src/popup/）<br>FinancialStatementList"]
-    KIT["src/shared/financialCharts/<br>StackedBarChart / WaterfallChart / ChartUnavailable"]
-    BG -->|"query financialReports"| API
-    API -->|"チャート構造"| BG
-    BG --> STORE --> POPUP --> KIT
-```
+`src/background/` がタブ・銘柄を判定して API を取得し、`src/store/` の webext-redux 経由で `src/popup/` に渡す。描画は `src/shared/financialCharts/`。接続先は下記の設定元を確認し、値を重複して管理しない。
 
 - パスエイリアス `@/` = `src/`。UI コンポーネントはクラスコンポーネントが既存の流儀
 - チャートの科目・色・積み上げ順は API の返却値（colorRole・配列順序）が契約で、フロントで解釈・並べ替えをしない
@@ -41,7 +31,7 @@ flowchart LR
 ## 関連リポジトリ・ローカル環境
 
 - financial-statement（通常 `../financial-statement`）: monorepo（`application/backend` = Rails、`application/frontend` = React）。`docker compose up` で API が `localhost:20000`、GraphiQL は `http://localhost:20000/graphiql`
-- 設計ドキュメントは financial-statement の `docs/guide/`（README.md が目次。チャート契約は `05_frontend.md`）
+- 設計ドキュメントは financial-statement の `docs/guide/`（README.md が目次。チャート契約は `03_data_flow.md`・`04_system.md` の関連節）
 - ローカル動作確認の手順は [README.md](README.md) を参照
 
 ## リリースの順序制約
@@ -50,14 +40,17 @@ flowchart LR
 
 共通 `release` skill を使い、この拡張固有のコマンド・版番号・確認項目は [docs/release.md](docs/release.md) に従う。
 
-## 実機 E2E のヒント
+実機・自動 E2E を行うときは [README の検証手順](README.md#拡張を自動操作して検証するとき)を参照する。
 
-- ブランド版 Chrome 137+ は `--load-extension` フラグを無視する。自動 E2E には Chrome for Testing（`npx @puppeteer/browsers install chrome@stable`）+ puppeteer-core を使う
-- ポップアップは `chrome-extension://<拡張ID>/popup/popup.html` をタブとして開いても検証できる（proxyStore 経由で background のデータが届く）。カルーセルの自動再生は localStorage `investeeExtensionIsStatementAutoPlay=false` で停止できる
+## 共通エージェント設定
 
-## Claude Code と Codex
+- `make setup` と [README の導入手順](README.md#エージェントの導入と-hook)を使う。共通 skill の実体は plugin 側で編集する。
+- この拡張は ESLint・Prettier を使い、共通 hook の Biome は適用しない。既存の lint・ビルドで確認する。
 
-- `AGENTS.md` はこのファイルへの相対シンボリックリンク。
-- `make setup` で、導入済みの Claude・Codex に [agent-plugins](https://github.com/shin4488/agent-plugins) をユーザー単位でインストールする。共通 skill の実体はプラグイン側で編集する。
-- 導入後はツールを読み込み直す。hook を使う場合はリポジトリを信頼し、Codex の `/hooks` で確認・承認する（[手順](https://learn.chatgpt.com/docs/hooks)）。
-- この拡張は ESLint・Prettier を使い、Biome 設定はないため共通 hook の Biome 処理は適用されない。既存の lint・ビルド手順を使う。
+## 調査と指示の保守
+
+- `AGENTS.md` は `CLAUDE.md` への相対リンク。本文は一度読み、実体を編集する。
+- `rg` は対象ディレクトリから名前・見出し・シンボルを探す。通常は `-g` で依存・成果物・ログ・ロックファイル・生成コードを除外し、依存・生成・型・障害の調査では直接読む。見つからなければ範囲・除外を見直す。
+- 必須検証を行い、要点・失敗箇所を報告する。同じ差分・依存・設定・実行条件の結果は再利用する。
+- ここは恒久規約・必須条件・主要コマンド・参照先に限る。進捗はチャット・既存 Issue/PR、機能・構成・依存・設定等の現在値は元の定義へ。規約・条件・参照先の変更や継続して必要な判断基準の追加時に更新する。
+- スキルは説明から選び、該当 `SKILL.md` に従う。一覧・手順は転記せず、このガイドの必須適用条件は守る。

@@ -119,3 +119,15 @@ Web フロント（financial-statement `application/frontend`）とコピー共�
 ## ベース
 
 [browser-extension-react-typescript-starter](https://github.com/sinanbekar/browser-extension-react-typescript-starter) をベースにしている。ライセンスは [LICENSE](LICENSE) を参照。
+
+## 拡張を自動操作して検証するとき
+
+- ブランド版 Chrome 137+ は `--load-extension` フラグを無視する。自動 E2E には Chrome for Testing（`npx @puppeteer/browsers install chrome@stable`）+ puppeteer-core を使う
+- ポップアップは `chrome-extension://<拡張ID>/popup/popup.html` をタブとして開いても検証できる（proxyStore 経由で background のデータが届く）。カルーセルの自動再生は localStorage `investeeExtensionIsStatementAutoPlay=false` で停止できる
+
+## エージェントの導入と hook
+
+- `AGENTS.md` は `CLAUDE.md` への相対シンボリックリンク。
+- `make setup` で、導入済みの Claude・Codex に [agent-plugins](https://github.com/shin4488/agent-plugins) をユーザー単位でインストールする。共通 skill の実体はプラグイン側で編集する。
+- 導入後はツールを読み込み直す。hook を使う場合はリポジトリを信頼し、Codex の `/hooks` で確認・承認する（[手順](https://learn.chatgpt.com/docs/hooks)）。
+- この拡張は ESLint・Prettier を使い、Biome 設定はないため共通 hook の Biome 処理は適用されない。既存の lint・ビルド手順を使う。

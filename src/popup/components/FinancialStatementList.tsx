@@ -86,7 +86,7 @@ class FinancialStatementList extends React.Component<FinancialStatementListWithS
                       <StackedBarChart chart={statement.balanceSheet} width="100%" />
                       <StackedBarChart chart={statement.profitLoss} width="100%" />
                       <WaterfallChart chart={statement.cashFlow} width="100%" />
-                      <FinancialIndicators indicators={statement.financialIndicators} compact />
+                      <FinancialIndicators indicators={statement.financialIndicators} />
                     </AppCarousel>
                   </CardContent>
                 </Card>

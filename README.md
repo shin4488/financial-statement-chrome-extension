@@ -1,133 +1,93 @@
-# investee Chrome 拡張
+# investee Chrome 拡張機能
 
-株式情報サイトの銘柄ページを見ながら、その企業の財務 3 表（貸借対照表・損益計算書・キャッシュフロー計算書）をポップアップで可視化するブラウザ拡張（Chrome MV3 / Firefox MV2）。
+株式情報サイトの銘柄ページを開いた際に、ワンクリックでその企業の財務三表（貸借対照表・損益計算書・キャッシュフロー計算書）をポップアップ表示するブラウザ拡張機能です。
 
-データは [investee.info](https://investee.info) の GraphQL API（`financialReports`）から取得する。
+データは [investee.info](https://investee.info) の GraphQL API から取得し、見やすいグラフとして描画します。
 
-## 対応サイト
+---
 
-以下のサイトで銘柄ページを開くと拡張アイコンが有効になり、クリックで財務 3 表のカルーセルを表示する。
+## 主な対応サイト
 
-| サイト             | ドメイン                                                                                                                |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| 株探               | [kabutan.jp](https://kabutan.jp/)                                                                                       |
-| みんかぶ           | [minkabu.jp](https://minkabu.jp/)                                                                                       |
-| Yahoo!ファイナンス | [finance.yahoo.co.jp](https://finance.yahoo.co.jp/)                                                                     |
-| 四季報オンライン   | [shikiho.toyokeizai.net](https://shikiho.toyokeizai.net/)                                                               |
-| バフェット・コード | [www.buffett-code.com](https://www.buffett-code.com/)                                                                   |
-| 楽天証券           | [www.rakuten-sec.co.jp](https://www.rakuten-sec.co.jp/) / [member.rakuten-sec.co.jp](https://member.rakuten-sec.co.jp/) |
+以下のサイトで銘柄ページを開くと拡張アイコンがアクティブになり、ポップアップで財務三表を確認できます。
+
+- **株探** (`kabutan.jp`)
+- **みんかぶ** (`minkabu.jp`)
+- **Yahoo!ファイナンス** (`finance.yahoo.co.jp`)
+- **四季報オンライン** (`shikiho.toyokeizai.net`)
+- **バフェット・コード** (`buffett-code.com`)
+- **楽天証券** (`rakuten-sec.co.jp`)
+
+---
 
 ## 仕組み
 
 ```mermaid
-flowchart TB
-    TAB["タブ切替・URL変更<br>（対応サイトの銘柄ページ）"]
-    subgraph bg["background service worker（src/background/）"]
-        SITE["stockSite/ + siteClassMapper.ts<br>対応サイト判定・銘柄コード抽出"]
-        SVC["financialStatement/<br>financialReports クエリ実行"]
-    end
-    API["GraphQL API<br>本番: investee.info/api/graphql<br>開発ビルド: localhost:20000/graphql"]
-    STORE["Redux store（src/store/、webext-redux）<br>background と popup で共有"]
-    subgraph pop["ポップアップ（src/popup/）"]
-        LIST["FinancialStatementList<br>MUI カード + カルーセル"]
-        KIT["共有チャートキット src/shared/financialCharts/<br>StackedBarChart / WaterfallChart / ChartUnavailable"]
-    end
-    TAB --> SITE --> SVC
-    SVC -->|"query financialReports"| API
-    API -->|"チャート構造<br>（bars/segments・steps・colorRole）"| SVC
-    SVC --> STORE --> LIST --> KIT
+flowchart LR
+    Page["株式情報サイト<br>(銘柄ページを開く)"] --> Ext["拡張機能 (Background)<br>URLから銘柄コードを抽出"]
+    Ext -->|"GraphQL Query"| API["investee.info API<br>(財務データ取得)"]
+    API --> Ext
+    Ext --> Pop["ポップアップ UI<br>(MUI + recharts でグラフ描画)"]
 ```
 
-- チャートの科目・積み上げ順・色 role はすべて API が返す。フロントは解釈せず描画するだけの汎用契約（詳細は financial-statement リポジトリの `docs/guide/05_frontend.md`）
-- 技術スタック: React / TypeScript / Redux Toolkit / Apollo Client / recharts / MUI / Vite / @crxjs/vite-plugin
+---
 
-## セットアップ
+## 技術スタック
 
-Node.js 20 以降 / Yarn 1.x
+- **フレームワーク / 言語**: React, TypeScript
+- **状態管理 / 通信**: Redux Toolkit, Apollo Client (GraphQL)
+- **UI / チャート**: Material-UI, recharts
+- **ビルドツール**: Vite, CRXJS (@crxjs/vite-plugin)
+- **仕様**: Manifest V3 (Chrome) / Manifest V2 (Firefox)
+
+---
+
+## 開発環境と動作確認
+
+### 1. 依存パッケージのインストール
 
 ```bash
 yarn install
 ```
 
-## ローカル動作確認
-
-1. [financial-statement](https://github.com/shin4488/financial-statement) リポジトリでバックエンドを起動する（`docker compose up` → API が `http://localhost:20000`）
-2. 開発ビルドを作る
-
-   ```bash
-   npx vite build --mode development
-   ```
-
-3. `chrome://extensions` → 「デベロッパーモード」ON → 「パッケージ化されていない拡張機能を読み込む」→ このリポジトリの `dist/` を選択（名前が `[Dev] investee...` になっていることを確認）
-4. 対応サイトの銘柄ページ（例: `https://kabutan.jp/stock/?code=2678`）を開いて拡張アイコンをクリック
-
-- コードを変更したら再ビルドして `chrome://extensions` の「更新」ボタンを押す（フォルダの選択し直しは不要）
-- バックエンド側のデータだけが変わった場合は再ビルド不要。銘柄ページを開き直すと再取得される
-- HMR で開発する場合は `yarn dev` を起動したままにする（dev サーバ停止中は「Vite Dev Mode」画面になり動かない）
-
-### ビルドモードと接続先
-
-| 項目             | 開発ビルド                                       | 本番ビルド                          |
-| ---------------- | ------------------------------------------------ | ----------------------------------- |
-| コマンド         | `npx vite build --mode development` / `yarn dev` | `yarn build`                        |
-| GraphQL 接続先   | `http://localhost:20000/graphql`                 | `https://investee.info/api/graphql` |
-| host_permissions | investee.info + localhost:20000                  | investee.info のみ                  |
-| manifest 名      | `[Dev] investee...`                              | `investee...`                       |
-
-## GraphQL 型生成（codegen）
-
-クエリは `.graphql` ファイルで定義する（`src/background/financialStatement/document.graphql`）。変更したら:
+### 2. 開発用ビルドの生成
 
 ```bash
-yarn compile
+# 開発モードでビルド（localhost:20000 への接続に対応）
+yarn build --mode development
 ```
 
-- スキーマ取得先は本番 introspection `https://investee.info/api/graphql`（`codegen.ts`）。ローカルバックエンドの起動は不要。
-  バックエンドの変更を先行開発するときだけ一時的に `http://localhost:20000/graphql` へ切り替える
-- 生成物 `src/__generated__/` はコミットする（build / CI では再生成しない）
-- `Money` スカラは `number` として生成される（円単位の金額が JSON 数値で届く）
+### 3. Chrome への読み込み
 
-## テスト・lint
+1. Google Chrome を開き、アドレスバーに `chrome://extensions` を入力して開きます。
+2. 画面右上の **「デベロッパーモード」** を ON にします。
+3. **「パッケージ化されていない拡張機能を読み込む」** をクリックし、本リポジトリの `dist/` ディレクトリを選択します。
+4. 対応サイト（例: `https://kabutan.jp/stock/?code=7203`）を開き、拡張アイコンをクリックして動作を確認します。
+
+※ コードを変更した場合は、再度ビルドを実行したあと拡張機能一覧画面で「更新」アイコンをクリックしてください。
+
+---
+
+## 主なコマンド
 
 ```bash
-yarn test
+yarn dev       # Vite の開発サーバ起動（HMR）
+yarn build     # 本番用ビルド（Chrome用 dist/ と Firefox用 dist-firefox-v2/ を生成）
+yarn test      # テストの実行
+yarn lint      # ESLint による静的検証
+yarn compile   # GraphQL スキーマから TypeScript 型を再生成
 ```
 
-```bash
-yarn lint
+---
+
+## ディレクトリ構成
+
+```text
+financial-statement-chrome-extension/
+├── src/
+│   ├── background/          # 銘柄ページ検知、銘柄コード抽出、API通信
+│   ├── popup/               # ポップアップの画面レイアウト、カルーセル表示
+│   ├── shared/              # Web版と共有する財務グラフ描画コンポーネント
+│   └── store/               # Redux store 定義
+├── manifest.json            # 拡張機能のマニフェスト定義 (MV3)
+└── vite.config.ts           # ビルド設定
 ```
-
-`yarn format` で自動整形。pre-commit フック（nano-staged）でも整形が走る。
-
-## 共有チャートキット（src/shared/financialCharts/）
-
-Web フロント（financial-statement `application/frontend`）とコピー共有している汎用チャート部品。**このリポジトリ内で直接編集しないこと。** 修正はコピー元に入れてからディレクトリごとコピーする（ドリフト確認はコピー元ディレクトリとの diff）。特に `colorRoles.ts` はバックエンドの enum と同時に変更される契約。詳細は [src/shared/financialCharts/README.md](src/shared/financialCharts/README.md)。
-
-## リリース
-
-1. **バックエンド（`financialReports`）の本番デプロイが先行条件**（拡張を先に公開すると、本番 API に存在しないクエリを投げて表示が壊れる）
-2. `package.json` の `version` を上げる
-3. `yarn build`（`dist/`: Chrome MV3、`dist-firefox-v2/`: Firefox MV2）
-4. 本番ビルドを実機確認のうえ Chrome Web Store へ申請
-
-詳細な手順・チェックリストは [docs/release.md](docs/release.md) を参照。
-
-## 補足: host_permissions と CORS
-
-本番 API は CORS ヘッダを返さないため、拡張からの fetch は `host_permissions` による CORS 免除に依存している。パターンはパス付きの `https://investee.info/*` であること（Chrome の CORS 免除はオリジン単位のためパス無しでも動作はするが、マッチパターンとしては誤り）。
-
-## ベース
-
-[browser-extension-react-typescript-starter](https://github.com/sinanbekar/browser-extension-react-typescript-starter) をベースにしている。ライセンスは [LICENSE](LICENSE) を参照。
-
-## 拡張を自動操作して検証するとき
-
-- ブランド版 Chrome 137+ は `--load-extension` フラグを無視する。自動 E2E には Chrome for Testing（`npx @puppeteer/browsers install chrome@stable`）+ puppeteer-core を使う
-- ポップアップは `chrome-extension://<拡張ID>/popup/popup.html` をタブとして開いても検証できる（proxyStore 経由で background のデータが届く）。カルーセルの自動再生は localStorage `investeeExtensionIsStatementAutoPlay=false` で停止できる
-
-## エージェントの導入と hook
-
-- `AGENTS.md` は `CLAUDE.md` への相対シンボリックリンク。
-- `make setup` で、導入済みの Claude・Codex に [agent-plugins](https://github.com/shin4488/agent-plugins) をユーザー単位でインストールする。共通 skill の実体はプラグイン側で編集する。
-- 導入後はツールを読み込み直す。hook を使う場合はリポジトリを信頼し、Codex の `/hooks` で確認・承認する（[手順](https://learn.chatgpt.com/docs/hooks)）。
-- この拡張は ESLint・Prettier を使い、Biome 設定はないため共通 hook の Biome 処理は適用されない。既存の lint・ビルド手順を使う。

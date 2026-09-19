@@ -7,6 +7,29 @@ query FinancialReports($stockCodes: [String!]) {
     fiscalYearEndDate
     accountingStandard
     consolidationType
+    financialIndicators {
+      roe {
+        value
+        status
+        source
+      }
+      roa {
+        value
+        status
+      }
+      netProfitMargin {
+        value
+        status
+      }
+      assetTurnover {
+        value
+        status
+      }
+      financialLeverage {
+        value
+        status
+      }
+    }
     balanceSheet {
       renderable
       note

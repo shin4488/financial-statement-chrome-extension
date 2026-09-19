@@ -24,7 +24,7 @@ investee（https://investee.info）のブラウザ拡張。株式情報サイト
 
 - **GraphQL クエリは `.graphql` ファイル**（codegen の documents: `**/*.graphql`。gql タグではない）。変更後 `yarn compile`。生成物 `src/__generated__/` はコミットする
 - codegen の schema は本番 introspection（`https://investee.info/api/graphql`）を参照。バックエンドの変更を先行開発するときだけ一時的にローカル docker（`http://localhost:20000/graphql`）へ切り替える。`Money` スカラは `number`
-- **`src/shared/financialCharts/` は直接編集禁止**。コピー元は financial-statement `application/frontend/src/shared/financialCharts/`。同期はディレクトリごとコピーする（ドリフト確認はコピー元との diff）。`colorRoles.ts` はバックエンド enum との契約で、BE / Web フロント / 拡張の 3 点同時変更
+- **`src/shared/financialCharts/` と `src/shared/financialIndicators/` は直接編集禁止**。コピー元は financial-statement `application/frontend/src/shared/` の同名ディレクトリ。同期はディレクトリごとコピーする（ドリフト確認はコピー元との diff）。`colorRoles.ts` はバックエンド enum との契約で、BE / Web フロント / 拡張の 3 点同時変更
 - 接続先切替は `import.meta.env.MODE`（`src/background/financialStatement/apolloClientService.ts`）と `env.mode`（`src/manifest.mts`）。本番 API は CORS ヘッダを返さないため host_permissions の CORS 免除で fetch している。パターンは `https://investee.info/*`（パス `/*` 必須）
 - コミットメッセージは `add:` / `change:` プレフィックスの英語 1 行（`git log` 参照）
 

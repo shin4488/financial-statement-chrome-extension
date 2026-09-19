@@ -7,6 +7,7 @@ import CardHeader from '@mui/material/CardHeader';
 import CardContent from '@mui/material/CardContent';
 import AppCarousel from './appCarousel/AppCarousel';
 import { StackedBarChart, WaterfallChart } from '@/shared/financialCharts';
+import { FinancialIndicators } from '@/shared/financialIndicators';
 import { RootState } from '@/store/store';
 
 // 会計基準は日本基準以外のみサブヘッダに表示する（判断材料として意味を持つのは
@@ -85,6 +86,7 @@ class FinancialStatementList extends React.Component<FinancialStatementListWithS
                       <StackedBarChart chart={statement.balanceSheet} width="100%" />
                       <StackedBarChart chart={statement.profitLoss} width="100%" />
                       <WaterfallChart chart={statement.cashFlow} width="100%" />
+                      <FinancialIndicators indicators={statement.financialIndicators} compact />
                     </AppCarousel>
                   </CardContent>
                 </Card>

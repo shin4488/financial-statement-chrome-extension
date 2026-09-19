@@ -91,9 +91,3 @@ financial-statement-chrome-extension/
 ├── manifest.json            # 拡張機能のマニフェスト定義 (MV3)
 └── vite.config.ts           # ビルド設定
 ```
-
-## ROE・ROA
-
-財務カードは BS → PL → CF → ROE・ROA の順に切り替わります。指標の計算は API 側で行い、拡張は値・状態・出所を表示します。「データなし」と「算出不可」を区別し、企業公表 ROE で補完する場合は出所を表示します。売上に関する項目が欠けても取得できた ROE・ROA を残します。
-
-表示部品のコピー元は Web 版の `application/frontend/src/shared/financialIndicators/` です。レイアウトや表記の変更はコピー元に入れ、ディレクトリ全体を同期します。古い拡張のキャッシュに指標がなくても画面は表示でき、次回取得時に更新されます。

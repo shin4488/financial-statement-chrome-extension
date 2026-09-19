@@ -6,6 +6,20 @@ export type Incremental<T> =
   | T
   | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
+export type FinancialMetricSource =
+  /** 当サイトの定義による計算値 */
+  | 'CALCULATED'
+  /** 同じ有報・会計基準・連結区分の企業公表値。計算条件は提出書類の注記による */
+  | 'DISCLOSED';
+
+export type FinancialMetricStatus =
+  /** 計算値または企業公表値あり */
+  | 'AVAILABLE'
+  /** 必要な金額・期首値がない */
+  | 'MISSING_DATA'
+  /** 分母が0以下などの理由で算出できない */
+  | 'NOT_CALCULABLE';
+
 export type FinancialReportsQueryVariables = Exact<{
   stockCodes?: Array<string> | string | null | undefined;
 }>;
@@ -19,6 +33,17 @@ export type FinancialReportsQuery = {
     fiscalYearEndDate: string;
     accountingStandard: string;
     consolidationType: string;
+    financialIndicators: {
+      roe: {
+        value: number | null;
+        status: FinancialMetricStatus;
+        source: FinancialMetricSource | null;
+      };
+      roa: { value: number | null; status: FinancialMetricStatus };
+      netProfitMargin: { value: number | null; status: FinancialMetricStatus };
+      assetTurnover: { value: number | null; status: FinancialMetricStatus };
+      financialLeverage: { value: number | null; status: FinancialMetricStatus };
+    };
     balanceSheet: {
       renderable: boolean;
       note: string | null;
@@ -112,6 +137,71 @@ export const FinancialReportsDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'fiscalYearEndDate' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'accountingStandard' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'consolidationType' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'financialIndicators' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'roe' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'source' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'roa' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'netProfitMargin' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'assetTurnover' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'financialLeverage' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'value' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'status' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
                 {
                   kind: 'Field',
                   name: { kind: 'Name', value: 'balanceSheet' },

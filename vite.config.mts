@@ -1,17 +1,17 @@
 import { crx } from '@crxjs/vite-plugin';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
-import { defineConfig, loadEnv } from 'vite';
+import { defineConfig } from 'vite';
+import { readFileSync } from 'node:fs';
 import manifest from './src/manifest.mts';
 
 export default defineConfig((config) => {
-  const env = loadEnv(config.mode, process.cwd());
+  const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
 
   return {
     define: {
-      VITE_GOOGLE_ANALYTICS_API_KEY: JSON.stringify(env.VITE_GOOGLE_ANALYTICS_API_KEY),
-      VITE_GOOGLE_MEASUREMENT_ID: JSON.stringify(env.VITE_GOOGLE_MEASUREMENT_ID),
-      VITE_GOOGLE_FIREBASE_APP_ID: JSON.stringify(env.VITE_GOOGLE_FIREBASE_APP_ID),
+      ANALYTICS_ENABLED: JSON.stringify(config.mode === 'production'),
+      EXTENSION_VERSION: JSON.stringify(version),
     },
     // @see https://github.com/crxjs/chrome-extension-tools/issues/696
     server: {

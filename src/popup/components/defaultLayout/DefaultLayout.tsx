@@ -1,4 +1,5 @@
 import React from 'react';
+import { trackEvent } from '../../analytics';
 import { connect } from 'react-redux';
 import { DefaultLayoutProps } from './props';
 import {
@@ -32,6 +33,10 @@ type DefaultLayoutWithStoreProps = DefaultLayoutProps &
   ReturnType<typeof mapDispatchToProps>;
 
 class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
+  state = {
+    analyticsEnabled: localStorage.getItem('investeeExtensionAnalyticsEnabled') !== 'false',
+  };
+
   componentDidMount(): void {
     const isAutoPlay = (localStorage.getItem(autoPlayStatusLocalStorageKey) || 'true') === 'true';
     this.props.actions.changeAutoPlayStatus(isAutoPlay);
@@ -51,6 +56,9 @@ class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
                       <Checkbox
                         checked={this.props.isAutoPlay}
                         onChange={(event) => {
+                          trackEvent('analysis_interaction', {
+                            interaction_type: event.target.checked ? 'autoplay_on' : 'autoplay_off',
+                          });
                           this.props.actions.changeAutoPlayStatus(event.target.checked);
                           localStorage.setItem(
                             autoPlayStatusLocalStorageKey,
@@ -72,7 +80,8 @@ class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
                     rel="noopener noreferrer"
                     href={`https://investee.info/?stock-codes=${encodeURIComponent(
                       this.props.stockCode ?? '',
-                    )}`}
+                    )}&utm_source=investee_extension&utm_medium=referral&utm_campaign=compare`}
+                    onClick={() => trackEvent('outbound_click', { link_domain: 'investee.info' })}
                     underline="none"
                   >
                     investee.info
@@ -85,6 +94,32 @@ class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
         </AppBar>
 
         <Box component="main">{this.props.children}</Box>
+        <Box sx={{ px: 2, pb: 1 }}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                size="small"
+                checked={this.state.analyticsEnabled}
+                onChange={(event) => {
+                  localStorage.setItem(
+                    'investeeExtensionAnalyticsEnabled',
+                    String(event.target.checked),
+                  );
+                  this.setState({ analyticsEnabled: event.target.checked });
+                }}
+              />
+            }
+            label={<Typography variant="caption">改善のため利用状況を送信する</Typography>}
+          />
+          <Link
+            href="https://investee.info/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="caption"
+          >
+            送信する情報
+          </Link>
+        </Box>
 
         <Box
           component="footer"

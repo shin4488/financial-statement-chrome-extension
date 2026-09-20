@@ -3,6 +3,8 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { configureStore } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
 import FinancialStatementList from './FinancialStatementList';
+import { trackEvent } from '../analytics';
+jest.mock('../analytics', () => ({ trackEvent: jest.fn() }));
 import financialStatement, { setResult } from '@/store/slices/financialStatement';
 import autoPlayStatus, { changeAutoPlayStatus } from '@/store/slices/autoPlayStatusSlice';
 import sitePage from '@/store/slices/sitePageSlice';
@@ -62,6 +64,7 @@ function settle() {
 
 beforeEach(() => {
   jest.useFakeTimers();
+  jest.clearAllMocks();
   // jsdomはレイアウトを計測しないため、実ポップアップのチャート高を与える。
   jest.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(400);
 });
@@ -73,6 +76,7 @@ afterEach(() => {
 it('BS → PL → CF → ROE・ROAの順に切り替わり、前後へ循環する', () => {
   setup();
   expect(screen.getByText('BS表示')).toBeVisible();
+  expect(trackEvent).not.toHaveBeenCalled();
   for (const note of ['PL表示', 'CF表示']) {
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     settle();
@@ -82,6 +86,11 @@ it('BS → PL → CF → ROE・ROAの順に切り替わり、前後へ循環す�
   settle();
   expect(screen.getByLabelText('ROE：10.0%')).toBeVisible();
   expect(screen.getByLabelText('ROA：4.0%')).toBeVisible();
+  expect(trackEvent).toHaveBeenLastCalledWith('analysis_interaction', {
+    interaction_type: 'chart_navigation',
+    chart_type: 'indicators',
+  });
+  expect(trackEvent).toHaveBeenCalledTimes(3);
   fireEvent.click(screen.getByRole('button', { name: 'Next' }));
   settle();
   expect(screen.getByText('BS表示')).toBeVisible();
@@ -99,6 +108,7 @@ it('自動切替で指標にも進み、OFFにすると停止する', () => {
     settle();
   }
   expect(screen.getByLabelText('ROE：10.0%')).toBeVisible();
+  expect(trackEvent).not.toHaveBeenCalled();
   act(() => {
     store.dispatch(changeAutoPlayStatus(false));
   });

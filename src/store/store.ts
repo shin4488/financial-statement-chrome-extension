@@ -17,16 +17,27 @@ import autoPlayStatusReducer from './slices/autoPlayStatusSlice';
 import financialStatementReducer from './slices/financialStatement';
 import sitePageReducer from './slices/sitePageSlice';
 
-const persistConfig = {
-  key: 'root',
-  storage: localStorage as WebStorage,
-};
-
 const reducers = combineReducers({
   autoPlayStatus: autoPlayStatusReducer,
   financialStatement: financialStatementReducer,
   sitePage: sitePageReducer,
 });
+type AppState = ReturnType<typeof reducers>;
+
+const persistConfig = {
+  key: 'root',
+  whitelist: ['autoPlayStatus'],
+  storage: localStorage as WebStorage,
+  // 旧版が保存した財務データ・タブも復元しない。復元待ちの間に届いた最新結果を保つ。
+  stateReconciler: (
+    inbound: Partial<AppState>,
+    _original: AppState,
+    current: AppState,
+  ): AppState => ({
+    ...current,
+    autoPlayStatus: inbound.autoPlayStatus ?? current.autoPlayStatus,
+  }),
+};
 
 const persistedReducer: typeof reducers = persistReducer(persistConfig, reducers);
 const store = configureStore({

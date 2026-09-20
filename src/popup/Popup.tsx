@@ -1,15 +1,42 @@
+import { useEffect, useRef } from 'react';
+import { useSelector } from 'react-redux';
 import FinancialStatementList from './components/FinancialStatementList';
 import DefaultLayout from './components/defaultLayout/DefaultLayout';
-import { logLoadStatementsEventToAnalytics } from './analytics';
-import store from '@/store/store';
+import { trackEvent } from './analytics';
+import type { RootState } from '@/store/store';
 
 const Popup = () => {
-  // 開いた時点のページに関する情報をGoogleアナリティクスへ送信
-  const sitePage = store.getState().sitePage;
-  logLoadStatementsEventToAnalytics(sitePage.siteDomain, sitePage.stockCode);
-
-  // ポップアップ画面の大きさはpopup.htmlの静的CSSで定義する（ここでbodyに当てると
-  // JS実行までの未スタイルな一瞬をChromeが実寸とみなし、窓幅が最大の800pxで固定されることがある）
+  const sitePage = useSelector((state: RootState) => state.sitePage);
+  const { status, results } = useSelector((state: RootState) => state.financialStatement);
+  const opened = useRef(false);
+  const reported = useRef('');
+  useEffect(() => {
+    if (opened.current) {
+      return;
+    }
+    opened.current = true;
+    trackEvent('popup_open', { site_domain_name: sitePage.siteDomain || 'unknown' });
+  }, [sitePage.siteDomain]);
+  useEffect(() => {
+    if (status !== 'success' && status !== 'empty' && status !== 'error') {
+      return;
+    }
+    const key = `${sitePage.siteDomain}:${sitePage.stockCode}:${status}`;
+    if (reported.current === key) {
+      return;
+    }
+    reported.current = key;
+    trackEvent('report_result', {
+      site_domain_name: sitePage.siteDomain || 'unknown',
+      result_status: status,
+      result_count: results.length,
+      unavailable_count: results.filter((report) =>
+        [report.balanceSheet, report.profitLoss, report.cashFlow].some(
+          (chart) => !chart.renderable,
+        ),
+      ).length,
+    });
+  }, [results, sitePage, status]);
 
   return (
     <DefaultLayout>

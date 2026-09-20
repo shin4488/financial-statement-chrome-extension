@@ -8,6 +8,7 @@ import CardContent from '@mui/material/CardContent';
 import AppCarousel from './appCarousel/AppCarousel';
 import { StackedBarChart, WaterfallChart } from '@/shared/financialCharts';
 import { FinancialIndicators } from '@/shared/financialIndicators';
+import { trackEvent } from '../analytics';
 import { RootState } from '@/store/store';
 
 // 会計基準は日本基準以外のみサブヘッダに表示する（判断材料として意味を持つのは
@@ -20,12 +21,26 @@ const nonJgaapBadge: Record<string, string> = {
 
 const mapStateToProps = (state: RootState) => ({
   isAutoPlay: state.autoPlayStatus.isAutoPlay,
+  status: state.financialStatement.status,
   financialStatementResults: state.financialStatement.results,
 });
 type FinancialStatementListWithStoreProps = ReturnType<typeof mapStateToProps>;
 
 class FinancialStatementList extends React.Component<FinancialStatementListWithStoreProps> {
   render(): React.ReactNode {
+    if (
+      this.props.status === 'loading' ||
+      this.props.status === 'idle' ||
+      this.props.status === 'error'
+    ) {
+      return (
+        <p role="status">
+          {this.props.status === 'error'
+            ? '財務データを取得できませんでした。ページを再読み込みしてお試しください。'
+            : '財務データを読み込んでいます。'}
+        </p>
+      );
+    }
     if (this.props.financialStatementResults.length === 0) {
       return (
         <Grid size={12}>
@@ -62,6 +77,9 @@ class FinancialStatementList extends React.Component<FinancialStatementListWithS
                       <div className="financial-statement-card-header">
                         <Link
                           title={`${statement.companyName}（株探）`}
+                          onClick={() =>
+                            trackEvent('outbound_click', { link_domain: 'kabutan.jp' })
+                          }
                           underline="none"
                           target="_blank"
                           rel="noopener noreferrer"

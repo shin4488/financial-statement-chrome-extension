@@ -91,3 +91,7 @@ financial-statement-chrome-extension/
 ├── manifest.json            # 拡張機能のマニフェスト定義 (MV3)
 └── vite.config.ts           # ビルド設定
 ```
+
+## 利用状況の分析
+
+イベントの定義・GA4 の見方・計測停止設定は [計測ガイド](docs/analytics.md) を参照してください。

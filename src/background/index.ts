@@ -10,6 +10,8 @@ import { StockSite } from './stockSite/stockSite';
 initializeWrappedStore();
 
 let activePage = '';
+// タブ照会と財務取得は別々に完了順が逆転し得るため、それぞれ最新の要求を識別する。
+// 同じ銘柄への更新通知では財務取得をやり直さないので、2つの番号を共用しない。
 let requestSequence = 0;
 let loadSequence = 0;
 
@@ -33,7 +35,6 @@ const changeStateByActivatedTag = async () => {
     return;
   }
 
-  // 一度に複数タブをアクティブにすることは考えない（アクティブなタブは1つのみとなる）
   const activeTabUrl = new URL(activeTabs[0].url as string);
   const validSiteClass = getValidSiteInstance(activeTabUrl.hostname);
   if (validSiteClass === undefined) {
@@ -75,9 +76,7 @@ const changeStateByActivatedTag = async () => {
   }
 };
 
-// タブ切り替えのため
 browser.tabs.onActivated.addListener(changeStateByActivatedTag);
-// 新規タブを開いたり、URLバーからサイト移動した時のため
 browser.tabs.onUpdated.addListener(changeStateByActivatedTag);
 browser.windows.onFocusChanged.addListener(changeStateByActivatedTag);
 

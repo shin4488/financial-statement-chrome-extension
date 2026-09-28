@@ -73,5 +73,17 @@ query FinancialReports($stockCodes: [String!]) {
         colorRole
       }
     }
+    freeCashFlowTrend {
+      renderable
+      note
+      points {
+        year
+        fiscalYearStartDate
+        fiscalYearEndDate
+        operatingCf
+        investingCf
+        amount
+      }
+    }
   }
 }

@@ -81,6 +81,18 @@ export type FinancialReportsQuery = {
       note: string | null;
       steps: Array<{ key: string; label: string; amount: number; kind: string; colorRole: string }>;
     };
+    freeCashFlowTrend: {
+      renderable: boolean;
+      note: string | null;
+      points: Array<{
+        year: number;
+        fiscalYearStartDate: string | null;
+        fiscalYearEndDate: string | null;
+        operatingCf: number | null;
+        investingCf: number | null;
+        amount: number | null;
+      }>;
+    };
   }>;
 };
 
@@ -295,6 +307,32 @@ export const FinancialReportsDocument = {
                             { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                             { kind: 'Field', name: { kind: 'Name', value: 'kind' } },
                             { kind: 'Field', name: { kind: 'Name', value: 'colorRole' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'freeCashFlowTrend' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'renderable' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'note' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'points' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'year' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'fiscalYearStartDate' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'fiscalYearEndDate' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'operatingCf' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'investingCf' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'amount' } },
                           ],
                         },
                       },

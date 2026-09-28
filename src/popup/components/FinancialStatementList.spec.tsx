@@ -35,6 +35,18 @@ const report: FinancialStatementResult = {
   balanceSheet: { renderable: false, note: 'BS表示', bars: [] },
   profitLoss: { renderable: false, note: 'PL表示', bars: [] },
   cashFlow: { renderable: false, note: 'CF表示', steps: [] },
+  freeCashFlowTrend: {
+    renderable: true,
+    note: null,
+    points: [2022, 2023, 2024, 2025, 2026].map((year) => ({
+      year,
+      fiscalYearStartDate: `${year - 1}-06-01`,
+      fiscalYearEndDate: `${year}-05-31`,
+      operatingCf: 15_000_000,
+      investingCf: -3_000_000,
+      amount: 12_000_000,
+    })),
+  },
   financialIndicators: {
     roe: { ...metric, source: 'CALCULATED' },
     roa: { ...metric, value: 0.04 },
@@ -67,13 +79,21 @@ beforeEach(() => {
   jest.clearAllMocks();
   // jsdomはレイアウトを計測しないため、実ポップアップのチャート高を与える。
   jest.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(400);
+  Object.defineProperty(globalThis, 'ResizeObserver', {
+    configurable: true,
+    value: class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    },
+  });
 });
 afterEach(() => {
   jest.useRealTimers();
   jest.restoreAllMocks();
 });
 
-it('BS → PL → CF → ROE・ROAの順に切り替わり、前後へ循環する', () => {
+it('BS → PL → CF → フリーCF → ROE・ROAの順に切り替わり、前後へ循環する', () => {
   setup();
   expect(screen.getByText('BS表示')).toBeVisible();
   expect(trackEvent).not.toHaveBeenCalled();
@@ -84,13 +104,20 @@ it('BS → PL → CF → ROE・ROAの順に切り替わり、前後へ循環す�
   }
   fireEvent.click(screen.getByRole('button', { name: 'Next' }));
   settle();
+  expect(screen.getByLabelText(/2026年：\+12百万円/)).toBeVisible();
+  expect(trackEvent).toHaveBeenLastCalledWith('analysis_interaction', {
+    interaction_type: 'chart_navigation',
+    chart_type: 'fcf',
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+  settle();
   expect(screen.getByLabelText('ROE：10.0%')).toBeVisible();
   expect(screen.getByLabelText('ROA：4.0%')).toBeVisible();
   expect(trackEvent).toHaveBeenLastCalledWith('analysis_interaction', {
     interaction_type: 'chart_navigation',
     chart_type: 'indicators',
   });
-  expect(trackEvent).toHaveBeenCalledTimes(3);
+  expect(trackEvent).toHaveBeenCalledTimes(4);
   fireEvent.click(screen.getByRole('button', { name: 'Next' }));
   settle();
   expect(screen.getByText('BS表示')).toBeVisible();
@@ -101,7 +128,7 @@ it('BS → PL → CF → ROE・ROAの順に切り替わり、前後へ循環す�
 
 it('自動切替で指標にも進み、OFFにすると停止する', () => {
   const store = setup([report], true);
-  for (let i = 0; i < 3; i += 1) {
+  for (let i = 0; i < 4; i += 1) {
     act(() => {
       jest.advanceTimersByTime(5000);
     });
@@ -123,7 +150,7 @@ it('旧キャッシュの指標欠損でも開けて、再取得した企業公�
   expect(omitted).toBeDefined();
   // 更新前に永続化されたJSONは新しい必須フィールドを持たない。
   const store = setup([legacy as FinancialStatementResult]);
-  fireEvent.click(screen.getByRole('button', { name: 'carousel indicator 4' }));
+  fireEvent.click(screen.getByRole('button', { name: 'carousel indicator 5' }));
   settle();
   expect(screen.getAllByText('データなし')).toHaveLength(7);
   act(() => {
@@ -158,7 +185,7 @@ it('年度ごとのカードに対応する値を表示し、空の取得結果�
       },
     },
   ]);
-  for (const button of screen.getAllByRole('button', { name: 'carousel indicator 4' })) {
+  for (const button of screen.getAllByRole('button', { name: 'carousel indicator 5' })) {
     fireEvent.click(button);
     settle();
   }

@@ -104,6 +104,7 @@ export function WaterfallChart({ chart, width = '90%', height = 400 }: Waterfall
                 backgroundColor: tooltipBackgroundColor,
                 opacity: '0.8',
                 padding: '10px',
+                fontSize: 14,
               }}
               content={(props: unknown) => {
                 const p = props as {

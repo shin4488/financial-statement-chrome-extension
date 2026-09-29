@@ -104,7 +104,7 @@ it('BS → PL → CF → フリーCF → ROE・ROAの順に切り替わり、前
   }
   fireEvent.click(screen.getByRole('button', { name: 'Next' }));
   settle();
-  expect(screen.getByLabelText(/2026年：\+12百万円/)).toBeVisible();
+  expect(screen.getByLabelText(/2026年：12百万円/)).toBeVisible();
   expect(trackEvent).toHaveBeenLastCalledWith('analysis_interaction', {
     interaction_type: 'chart_navigation',
     chart_type: 'fcf',

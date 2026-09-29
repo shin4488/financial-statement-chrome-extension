@@ -6,7 +6,7 @@ import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
 import CardContent from '@mui/material/CardContent';
 import AppCarousel from './appCarousel/AppCarousel';
-import { StackedBarChart, WaterfallChart } from '@/shared/financialCharts';
+import { FreeCashFlowChart, StackedBarChart, WaterfallChart } from '@/shared/financialCharts';
 import { FinancialIndicators } from '@/shared/financialIndicators';
 import { trackEvent } from '../analytics';
 import { RootState } from '@/store/store';
@@ -99,11 +99,12 @@ class FinancialStatementList extends React.Component<FinancialStatementListWithS
                   />
                   <CardContent>
                     <AppCarousel isAutoPlay={this.props.isAutoPlay} stopAutoPlayOnHover={false}>
-                      {/* 貸借対照表・損益計算書・キャッシュフロー計算書。
+                      {/* 貸借対照表・損益計算書・キャッシュフロー計算書・フリーCF。
                           チャート構造はAPIの返却値をそのまま渡す（表示不可はrenderable/noteで届く） */}
                       <StackedBarChart chart={statement.balanceSheet} width="100%" />
                       <StackedBarChart chart={statement.profitLoss} width="100%" />
                       <WaterfallChart chart={statement.cashFlow} width="100%" />
+                      <FreeCashFlowChart trend={statement.freeCashFlowTrend} />
                       <FinancialIndicators indicators={statement.financialIndicators} />
                     </AppCarousel>
                   </CardContent>

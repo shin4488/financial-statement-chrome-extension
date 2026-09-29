@@ -18,7 +18,7 @@ export default class AppCarousel extends React.Component<AppCarouselProps> {
       <Carousel
         onChange={(now, previous) => {
           if (this.manualNavigation && now !== previous) {
-            const chartTypes: EventParams['chart_type'][] = ['bs', 'pl', 'cf', 'indicators'];
+            const chartTypes: EventParams['chart_type'][] = ['bs', 'pl', 'cf', 'fcf', 'indicators'];
             trackEvent('analysis_interaction', {
               interaction_type: 'chart_navigation',
               chart_type: chartTypes[now ?? 0],

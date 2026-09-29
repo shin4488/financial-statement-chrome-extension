@@ -1,7 +1,8 @@
 # financialCharts — 共有チャートキット
 
-`financialReports` GraphQL API が返すチャート構造（StackChart / WaterfallChart）を
-そのまま描画する汎用コンポーネント群。**科目・会計基準・表示形式の知識を一切持たない**。
+`financialReports` GraphQL API が返すチャート構造（StackChart / WaterfallChart / FreeCashFlowTrend）を
+そのまま描画する汎用コンポーネント群。BS・PL・CF では科目や会計基準を解釈せず、
+フリー CF も API が返した各年の値を描画する。
 
 ## コピー元
 
@@ -38,7 +39,8 @@ Web フロントとブラウザ拡張（financial-statement-chrome-extension）�
 - `renderable: false` は正常系（未対応形式・データ欠落）。`note` を代替表示する
 - StackChart の `Segment` は `amount` が描画高さ（常に 0 以上）、`signedAmount` が実値（ツールチップ用）。
   WaterfallChart の `WaterfallStep.amount` は符号付きの実値（増減の向きそのものが情報のため）
-- 金額の表示は `formatAmount`（百万円単位・百万円未満切捨て。百万円未満の値は千円単位）に統一する。API の金額は円のまま
+- FreeCashFlowTrend の金額は円で受け取り、カードには百万円単位で表示する。欠損年は `amount: null` として区別する
+- BS・PL の金額は `formatAmount`（百万円単位・百万円未満切捨て。百万円未満の値は千円単位）で表示する。CF はグラフ外に「百万円」を置き、`formatAmountInMillions` でバー上の数値とツールチップを百万円単位に揃える。API の金額は円のまま
 - `colorRole` は意味ベースの色の役割名。新しい role が増えたときだけ `colorRoles.ts` に 1 行追加する。
   ウォーターフォールも API が `WaterfallStep.colorRole`（cashIncrease / cashDecrease）で指定する。
   フィールドを取得しない古い呼び出し元では符号から同じ role を補う（後方互換）

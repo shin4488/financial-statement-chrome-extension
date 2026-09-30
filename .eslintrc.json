@@ -19,6 +19,7 @@
     "ecmaFeatures": { "jsx": true }
   },
   "plugins": ["@typescript-eslint", "prettier", "react", "react-hooks"],
+  "settings": { "react": { "version": "detect" } },
   "rules": {
     "react/react-in-jsx-scope": "off",
     // propsの型はTypeScriptで担保する。このルールはReturnType<typeof mapStateToProps>のような

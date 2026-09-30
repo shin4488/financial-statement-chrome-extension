@@ -1,4 +1,5 @@
 import React from 'react';
+import { Box, Stack, Typography } from '@mui/material';
 import { Bar, BarChart, Cell, LabelList, Tooltip, XAxis, YAxis } from 'recharts';
 import { ChartUnavailable } from './ChartUnavailable';
 import { colorForRole, tooltipBackgroundColor } from './colorRoles';
@@ -81,12 +82,18 @@ export function WaterfallChart({ chart, width = '90%', height = 400 }: Waterfall
   const rows = toWaterfallRows(chart.steps);
 
   return (
-    <div
-      className="bar-container"
-      style={{ width, height, display: 'flex', flexDirection: 'column' }}
-    >
-      <div style={{ fontSize: 12, lineHeight: '20px', textAlign: 'left' }}>百万円</div>
-      <div ref={chartElement} style={{ flex: 1, minHeight: 0 }}>
+    <Stack width={width} height={height} m="auto">
+      <Typography
+        letterSpacing="inherit"
+        fontFamily="inherit"
+        component="div"
+        fontSize={12}
+        lineHeight="20px"
+        textAlign="left"
+      >
+        百万円
+      </Typography>
+      <Box ref={chartElement} flex={1} minHeight={0}>
         {/* 非表示のカルーセル項目は0×0になるため、実寸があるときだけ描画する。上端には金額ラベルの余白を確保する */}
         {chartSize.width > 0 && chartSize.height > 0 && (
           <BarChart
@@ -145,7 +152,7 @@ export function WaterfallChart({ chart, width = '90%', height = 400 }: Waterfall
             </Bar>
           </BarChart>
         )}
-      </div>
-    </div>
+      </Box>
+    </Stack>
   );
 }

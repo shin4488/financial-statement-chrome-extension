@@ -1,0 +1,4 @@
+{
+  "development": "http://localhost:20000/graphql",
+  "production": "https://investee.info/api/graphql"
+}

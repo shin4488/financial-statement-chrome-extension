@@ -17,7 +17,7 @@
     "jsx": "react-jsx",
     "allowImportingTsExtensions": true
   },
-  "include": ["src", "vite.config.mts"],
+  "include": ["src", "tools/popup-preview", "vite.config.mts"],
   "exclude": [
     "src/__generated__/fragment-masking.ts",
     "src/__generated__/gql.ts",

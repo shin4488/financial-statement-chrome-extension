@@ -4,6 +4,7 @@
   "version": "1.5.0",
   "scripts": {
     "dev": "run-s clean && vite",
+    "preview:popup": "vite --config tools/popup-preview/vite.config.mts",
     "build": "run-s clean && tsc && vite build && run-s firefox-mv2-build",
     "firefox-mv2-build": "node tools/unstable_mv3ToMv2Build.mjs",
     "clean": "run-p clean:*",

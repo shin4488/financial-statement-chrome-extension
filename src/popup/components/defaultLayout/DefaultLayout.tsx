@@ -126,7 +126,7 @@ class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
           position="fixed"
           bgcolor="white"
           zIndex="10"
-          style={{ opacity: 0.7, bottom: 0 }}
+          sx={{ opacity: 0.7, bottom: 0 }}
         >
           出典:
           <Link

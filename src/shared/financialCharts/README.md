@@ -9,19 +9,21 @@
 - financial-statement `application/frontend` の `src/shared/financialCharts/`
 
 このディレクトリはコピー運用。修正はコピー元（Web フロント側）に入れてから展開すること。
-ドリフトの確認はコピー元ディレクトリとの diff で行う（本リポジトリの prettier 整形による差分は許容）。
+ドリフトの確認はコピー元ディレクトリとの diff で行う（コピー先の prettier 整形による差分は許容）。
 
 ## 共有の前提（このディレクトリの規約）
 
 Web フロントとブラウザ拡張（financial-statement-chrome-extension）で同一実装を使う想定のため:
 
-- import してよいのは `react` と `recharts` のみ（両リポジトリ共通の依存。`*.test.ts` はグローバルの `describe` / `it` / `expect` だけを使い、`jest.*` / `vi.*` などランナー固有の API は使わない（コピー先の jest でも動かすため））
+- UI の依存は、両リポジトリで既に使う `react`・`recharts`・`@mui/material` に限定する。
+  MUI は Web 側の v5 と拡張側の v6 の両方で使える API を選び、両側で型・テスト・描画を確認する。
+  `*.test.ts` はグローバルの `describe` / `it` / `expect` だけを使い、`jest.*` / `vi.*` などランナー固有の API は使わない（コピー先の jest でも動かすため）
 - アプリ固有のもの（GraphQL クライアント・codegen 生成型・ルーティング・状態管理・
   パスエイリアス `@/`）に依存しない。ディレクトリ内は相対 import のみ
 - 型は `types.ts` の構造的型で受ける。codegen 生成型はフィールド構造が一致するため
   変換なしでそのまま渡せる
-- スタイルはコンポーネント内で完結させる（外部 CSS を要求しない）。例外は中央寄せの
-  `.bar-container` クラスだけで、コピー先のアプリ側 CSS にも同じ定義が必要
+- レイアウトは MUI の `Box`・`Stack`・`Typography` を使い、コンポーネント内で完結させる。
+  アプリ側の外部 CSS を要求しない。MUI の余白指定を基本とし、従来の寸法が必要な箇所は px 値を明示する
 
 ## 拡張側への展開手順（コピー運用のドリフト対策）
 

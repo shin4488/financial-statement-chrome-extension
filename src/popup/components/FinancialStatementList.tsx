@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Link } from '@mui/material';
+import { Link, Box } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
@@ -74,7 +74,7 @@ class FinancialStatementList extends React.Component<FinancialStatementListWithS
                 <Card>
                   <CardHeader
                     title={
-                      <div className="financial-statement-card-header">
+                      <Box textAlign="left">
                         <Link
                           title={`${statement.companyName}（株探）`}
                           onClick={() =>
@@ -89,12 +89,12 @@ class FinancialStatementList extends React.Component<FinancialStatementListWithS
                         >
                           <span>{statement.companyName}</span>
                         </Link>
-                      </div>
+                      </Box>
                     }
                     subheader={
-                      <div className="financial-statement-card-header">
+                      <Box textAlign="left">
                         {`${statement.fiscalYearStartDate} - ${statement.fiscalYearEndDate}${subheaderSuffix}`}
-                      </div>
+                      </Box>
                     }
                   />
                   <CardContent>

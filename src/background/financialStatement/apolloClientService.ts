@@ -5,6 +5,7 @@ import {
   OperationVariables,
   TypedDocumentNode,
 } from '@apollo/client';
+import apiEndpoints from './apiEndpoints.json';
 
 export default class ApolloClientService {
   static client: ApolloClient<NormalizedCacheObject> | null = null;
@@ -18,9 +19,7 @@ export default class ApolloClientService {
     return new ApolloClient({
       // financialReportsが本番未デプロイの間、開発ビルドはローカルdockerのバックエンドを参照する
       uri:
-        import.meta.env.MODE === 'development'
-          ? 'http://localhost:20000/graphql'
-          : 'https://investee.info/api/graphql',
+        import.meta.env.MODE === 'development' ? apiEndpoints.development : apiEndpoints.production,
       cache: new InMemoryCache(),
     });
   }

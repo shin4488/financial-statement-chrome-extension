@@ -8,7 +8,9 @@ for (const scenario of scenarios) {
 }
 select.addEventListener(
   'change',
-  () => (document.getElementById('popup').src = '/popup/popup.html?case=' + select.value),
+  () =>
+    (document.getElementById('popup').src =
+      '/popup/popup.html?case=' + encodeURIComponent(select.value)),
 );
 document.getElementById('start').addEventListener('click', async () => {
   const button = document.getElementById('start');

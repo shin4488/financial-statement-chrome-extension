@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <meta charset="utf-8" />
+  <title>investee __VERSION__ 本番ビルド動作確認</title>
+  <style>
+    body {
+      font: 15px sans-serif;
+      margin: 20px;
+      background: #f5f5f5;
+    }
+    iframe {
+      width: 448px;
+      height: 600px;
+      border: 1px solid #aaa;
+      background: white;
+    }
+    section {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    aside {
+      max-width: 650px;
+    }
+    #result {
+      white-space: pre-wrap;
+    }
+    h1 {
+      font-size: 22px;
+    }
+  </style>
+  <h1>investee __VERSION__ — 本番ビルドのローカル動作確認</h1>
+  <p>ビルド済みのコードを使用します。Chrome APIとAPI応答は模擬し、外部通信は行いません。</p>
+  <section>
+    <div>
+      <label
+        >表示データ
+        <select id="scenario"></select
+      ></label>
+      <p>
+        <iframe
+          title="本番ビルドのポップアップ"
+          id="popup"
+          src="/popup/popup.html?case=normal"
+        ></iframe>
+      </p>
+    </div>
+    <aside>
+      <h2>本番backgroundコード</h2>
+      <button id="start">背景処理テストを実行</button>
+      <pre id="result" aria-live="polite">未実行</pre>
+    </aside>
+  </section>
+  <script type="module" src="/background-test.js"></script>
+</html>

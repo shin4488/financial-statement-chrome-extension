@@ -58,3 +58,6 @@ jobs:
 
       - name: Unit test
         run: yarn ci:test
+
+      - name: Release preview server test
+        run: yarn test:release-preview

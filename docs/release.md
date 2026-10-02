@@ -58,6 +58,7 @@ version=$(node -p "require('./package.json').version")
 既存の同名 zip がある場合は、古いファイルが残らないよう新規アーカイブとして作り直す。zip の内容と `manifest.json` を確認する。
 
 - `release/` とビルド成果物はコミットしない。`git status` で確認する。
+- ZIP を展開して `yarn preview:release --dir <展開先>` を実行すると、本番コードの表示と背景処理を外部通信なしで確認できる。詳しくは [README のローカル確認](../README.md#5-本番ビルド申請用-zip-のローカル確認)を参照する。実機チェックの確認範囲とは区別する。
 - バージョン変更は `package.json` と、更新が必要だった場合の `yarn.lock` をコミットする。メッセージは `change:` で始まる英語 1 行。
 - PR 経由で main へ反映し、マージはユーザーが行う。マージ前にタグを作成しない。
 

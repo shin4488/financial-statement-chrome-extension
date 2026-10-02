@@ -79,6 +79,21 @@ yarn preview:popup
 
 変更前のソースを別ディレクトリに用意した場合は、`POPUP_PREVIEW_SOURCE=/path/to/before/src yarn preview:popup --port 8304` で同じ確認データによる比較もできます。
 
+### 5. 本番ビルド・申請用 ZIP のローカル確認
+
+```bash
+yarn build
+yarn preview:release
+# ZIP を展開したディレクトリも指定できます
+yarn preview:release --dir release/investee-1.5.2
+```
+
+[127.0.0.1:8307](http://127.0.0.1:8307/) で、ビルド済みのポップアップを同じ固定データで確認できます。「背景処理テストを実行」はビルド済みの service worker コードを Web Worker 内で実行し、対応 7 ドメインの銘柄検出・API の変数・取得失敗と再試行・古い応答の破棄・キャッシュと設定の復元など 20 項目を確認します。
+
+サーバはループバックでのみ待ち受け、Chrome API・永続化・GraphQL 応答は模擬します。外部接続は CSP と fetch の制限で防ぎ、確認データに実企業の値を含めません。開発モードのビルドは拒否します。サーバの配信範囲・接続制限のテストは `yarn test:release-preview` です。
+
+この確認では、拡張としての読み込み、host_permissions による本番 API の CORS 免除、Chrome の service worker 起動・停止は検証できません。[公開手順の実機チェック](docs/release.md#人間が行う部分)も実施してください。
+
 ---
 
 ## 主なコマンド

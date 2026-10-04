@@ -3,8 +3,7 @@ import { trackEvent, EventParams } from '../../analytics';
 import Carousel from 'react-material-ui-carousel';
 import { AppCarouselProps } from './props';
 
-// ナビボタンはカルーセル下端の帯に置かれる。インジケータ行を同じ高さにしないと、
-// ボタンが行からスライド側へはみ出し、幅の狭いポップアップではチャートの下端に重なる
+// ナビボタンはカルーセル下端の帯に置かれる。インジケータ行を同じ高さにしないと、ボタンが行からスライド側へはみ出し、幅の狭いポップアップではチャートの下端に重なる
 const navRowHeight = 40;
 
 export default class AppCarousel extends React.Component<AppCarouselProps> {

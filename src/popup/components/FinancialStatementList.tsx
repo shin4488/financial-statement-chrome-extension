@@ -1,6 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import { Link, Box } from '@mui/material';
+import { Link } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import Card from '@mui/material/Card';
 import CardHeader from '@mui/material/CardHeader';
@@ -74,28 +74,20 @@ class FinancialStatementList extends React.Component<FinancialStatementListWithS
                 <Card>
                   <CardHeader
                     title={
-                      <Box textAlign="left">
-                        <Link
-                          title={`${statement.companyName}（株探）`}
-                          onClick={() =>
-                            trackEvent('outbound_click', { link_domain: 'kabutan.jp' })
-                          }
-                          underline="none"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          href={`https://kabutan.jp/stock/?code=${encodeURIComponent(
-                            statement.stockCode ?? '',
-                          )}`}
-                        >
-                          <span>{statement.companyName}</span>
-                        </Link>
-                      </Box>
+                      <Link
+                        title={`${statement.companyName}（株探）`}
+                        onClick={() => trackEvent('outbound_click', { link_domain: 'kabutan.jp' })}
+                        underline="none"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        href={`https://kabutan.jp/stock/?code=${encodeURIComponent(
+                          statement.stockCode ?? '',
+                        )}`}
+                      >
+                        <span>{statement.companyName}</span>
+                      </Link>
                     }
-                    subheader={
-                      <Box textAlign="left">
-                        {`${statement.fiscalYearStartDate} - ${statement.fiscalYearEndDate}${subheaderSuffix}`}
-                      </Box>
-                    }
+                    subheader={`${statement.fiscalYearStartDate} - ${statement.fiscalYearEndDate}${subheaderSuffix}`}
                   />
                   <CardContent>
                     <AppCarousel isAutoPlay={this.props.isAutoPlay} stopAutoPlayOnHover={false}>

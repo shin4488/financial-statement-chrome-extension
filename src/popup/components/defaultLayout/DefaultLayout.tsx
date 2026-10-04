@@ -46,7 +46,7 @@ class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
     // 複数ページ共通で使用したい内容があればこのコンポーネントに記述する
     return (
       <>
-        <AppBar position="sticky" color="default" sx={{ bgcolor: 'F9F9E0' }}>
+        <AppBar position="sticky" color="default">
           <Toolbar variant="dense">
             <Grid container size={12} columnSpacing={3} alignItems="center">
               <Grid>
@@ -94,7 +94,7 @@ class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
         </AppBar>
 
         <Box component="main">{this.props.children}</Box>
-        <Box sx={{ px: 2, pb: 1 }}>
+        <Box px={2} pb={1}>
           <FormControlLabel
             control={
               <Checkbox
@@ -124,7 +124,7 @@ class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
         <Box
           component="footer"
           position="fixed"
-          bgcolor="white"
+          bgcolor="background.paper"
           zIndex="10"
           sx={{ opacity: 0.7, bottom: 0 }}
         >

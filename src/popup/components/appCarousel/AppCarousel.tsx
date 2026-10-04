@@ -3,6 +3,10 @@ import { trackEvent, EventParams } from '../../analytics';
 import Carousel from 'react-material-ui-carousel';
 import { AppCarouselProps } from './props';
 
+// ナビボタンはカルーセル下端の帯に置かれる。インジケータ行を同じ高さにしないと、
+// ボタンが行からスライド側へはみ出し、幅の狭いポップアップではチャートの下端に重なる
+const navRowHeight = 40;
+
 export default class AppCarousel extends React.Component<AppCarouselProps> {
   private manualNavigation = false;
 
@@ -26,6 +30,15 @@ export default class AppCarousel extends React.Component<AppCarouselProps> {
           }
           this.manualNavigation = false;
         }}
+        indicatorContainerProps={{
+          style: {
+            marginTop: 0,
+            height: navRowHeight,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
+        }}
         indicatorIconButtonProps={indicatorProps}
         autoPlay={this.props.isAutoPlay}
         swipe={false}
@@ -35,7 +48,7 @@ export default class AppCarousel extends React.Component<AppCarouselProps> {
         duration={100}
         navButtonsAlwaysVisible
         navButtonsWrapperProps={{
-          style: { top: 'auto', bottom: 0, height: 40 },
+          style: { top: 'auto', bottom: 0, height: navRowHeight },
         }}
         navButtonsProps={buttonProps}
       >

@@ -4,7 +4,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
 import FinancialStatementList from './FinancialStatementList';
 import { trackEvent } from '../analytics';
-jest.mock('../analytics', () => ({ trackEvent: jest.fn() }));
+vi.mock('../analytics', () => ({ trackEvent: vi.fn() }));
 import financialStatement, { setResult } from '@/store/slices/financialStatement';
 import autoPlayStatus, { changeAutoPlayStatus } from '@/store/slices/autoPlayStatusSlice';
 import sitePage from '@/store/slices/sitePageSlice';
@@ -12,7 +12,7 @@ import type { FinancialStatementResult } from '@/background/financialStatement/r
 
 // jsdomではアニメーションを描画できないため、motionの表示切替だけを同期化する。
 // カルーセル本体・前後移動・自動切替・Redux・指標コンポーネントは実装を使う。
-jest.mock('framer-motion', () => ({
+vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   motion: {
     div: ({ children, animate }: { children: React.ReactNode; animate?: string }) => (
@@ -70,15 +70,15 @@ function setup(reports = [report], autoPlay = false) {
 
 function settle() {
   act(() => {
-    jest.advanceTimersByTime(200);
+    vi.advanceTimersByTime(200);
   });
 }
 
 beforeEach(() => {
-  jest.useFakeTimers();
-  jest.clearAllMocks();
+  vi.useFakeTimers();
+  vi.clearAllMocks();
   // jsdomはレイアウトを計測しないため、実ポップアップのチャート高を与える。
-  jest.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(400);
+  vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(400);
   Object.defineProperty(globalThis, 'ResizeObserver', {
     configurable: true,
     value: class {
@@ -89,8 +89,8 @@ beforeEach(() => {
   });
 });
 afterEach(() => {
-  jest.useRealTimers();
-  jest.restoreAllMocks();
+  vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 it('BS → PL → CF → フリーCF → ROE・ROAの順に切り替わり、前後へ循環する', () => {
@@ -130,7 +130,7 @@ it('自動切替で指標にも進み、OFFにすると停止する', () => {
   const store = setup([report], true);
   for (let i = 0; i < 4; i += 1) {
     act(() => {
-      jest.advanceTimersByTime(5000);
+      vi.advanceTimersByTime(5000);
     });
     settle();
   }
@@ -140,7 +140,7 @@ it('自動切替で指標にも進み、OFFにすると停止する', () => {
     store.dispatch(changeAutoPlayStatus(false));
   });
   act(() => {
-    jest.advanceTimersByTime(10000);
+    vi.advanceTimersByTime(10000);
   });
   expect(screen.getByLabelText('ROE：10.0%')).toBeVisible();
 });

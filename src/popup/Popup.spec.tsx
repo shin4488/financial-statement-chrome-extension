@@ -8,12 +8,11 @@ import financialStatement, { setResult, setStatus } from '@/store/slices/financi
 import autoPlayStatus from '@/store/slices/autoPlayStatusSlice';
 import sitePage, { changeSiteDomain, changeStockCode } from '@/store/slices/sitePageSlice';
 
-jest.mock('./analytics', () => ({ trackEvent: jest.fn() }));
-jest.mock('./components/defaultLayout/DefaultLayout', () => ({
-  __esModule: true,
+vi.mock('./analytics', () => ({ trackEvent: vi.fn() }));
+vi.mock('./components/defaultLayout/DefaultLayout', () => ({
   default: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
-jest.mock('./components/FinancialStatementList', () => ({ __esModule: true, default: () => null }));
+vi.mock('./components/FinancialStatementList', () => ({ default: () => null }));
 
 it('uses the UI store and counts each settled result once even in StrictMode', () => {
   const store = configureStore({ reducer: { financialStatement, autoPlayStatus, sitePage } });

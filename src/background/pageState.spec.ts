@@ -1,30 +1,34 @@
+import type { Mock } from 'vitest';
 import browser from 'webextension-polyfill';
 import store from '@/store/store';
 import FinancialStatementService from './financialStatement/service';
 
-jest.mock('webextension-polyfill', () => ({
-  __esModule: true,
+vi.mock('webextension-polyfill', () => ({
   default: {
     tabs: {
-      query: jest.fn(),
-      onActivated: { addListener: jest.fn() },
-      onUpdated: { addListener: jest.fn() },
+      query: vi.fn(),
+      onActivated: { addListener: vi.fn() },
+      onUpdated: { addListener: vi.fn() },
     },
-    windows: { onFocusChanged: { addListener: jest.fn() } },
-    action: { enable: jest.fn(), disable: jest.fn() },
+    windows: { onFocusChanged: { addListener: vi.fn() } },
+    action: { enable: vi.fn(), disable: vi.fn() },
   },
 }));
-jest.mock('./financialStatement/service', () => ({ __esModule: true, default: jest.fn() }));
-jest.mock('@/store/store', () => {
-  const { configureStore } = jest.requireActual('@reduxjs/toolkit');
+vi.mock('./financialStatement/service', () => ({ default: vi.fn() }));
+vi.mock('@/store/store', async () => {
+  const { configureStore } = await vi.importActual<typeof import('@reduxjs/toolkit')>(
+    '@reduxjs/toolkit',
+  );
+  const financialStatement = await vi.importActual<
+    typeof import('@/store/slices/financialStatement')
+  >('@/store/slices/financialStatement');
+  const sitePage = await vi.importActual<typeof import('@/store/slices/sitePageSlice')>(
+    '@/store/slices/sitePageSlice',
+  );
   return {
-    __esModule: true,
-    initializeWrappedStore: jest.fn(),
+    initializeWrappedStore: vi.fn(),
     default: configureStore({
-      reducer: {
-        financialStatement: jest.requireActual('@/store/slices/financialStatement').default,
-        sitePage: jest.requireActual('@/store/slices/sitePageSlice').default,
-      },
+      reducer: { financialStatement: financialStatement.default, sitePage: sitePage.default },
     }),
   };
 });
@@ -32,26 +36,25 @@ jest.mock('@/store/store', () => {
 it('ignores stale responses after changing companies, and distinguishes error and empty', async () => {
   const resolves: ((result: []) => void)[] = [];
   const rejects: ((reason: Error) => void)[] = [];
-  const load = jest.fn(
+  const load = vi.fn(
     () =>
       new Promise((resolve, reject) => {
         resolves.push(resolve);
         rejects.push(reject);
       }),
   );
-  (FinancialStatementService as jest.Mock).mockImplementation(() => ({ load }));
-  (browser.tabs.query as jest.Mock).mockResolvedValue([
-    { url: 'https://kabutan.jp/stock/?code=7203' },
-  ]);
+  // new で呼ばれるため、アロー関数ではなく function で実装する
+  (FinancialStatementService as Mock).mockImplementation(function () {
+    return { load };
+  });
+  (browser.tabs.query as Mock).mockResolvedValue([{ url: 'https://kabutan.jp/stock/?code=7203' }]);
   await import('./index');
   await Promise.resolve();
   expect(store.getState().financialStatement.status).toBe('loading');
-  const refresh = (browser.tabs.onUpdated.addListener as jest.Mock).mock.calls[0][0];
+  const refresh = (browser.tabs.onUpdated.addListener as Mock).mock.calls[0][0];
   await refresh(); // 同じページの更新で二重に取得しない
   expect(load).toHaveBeenCalledTimes(1);
-  (browser.tabs.query as jest.Mock).mockResolvedValue([
-    { url: 'https://kabutan.jp/stock/?code=6758' },
-  ]);
+  (browser.tabs.query as Mock).mockResolvedValue([{ url: 'https://kabutan.jp/stock/?code=6758' }]);
   const pending = refresh();
   await Promise.resolve();
   resolves[0]([]);
@@ -65,7 +68,7 @@ it('ignores stale responses after changing companies, and distinguishes error an
   resolves[2]([]);
   await retry;
   expect(store.getState().financialStatement.status).toBe('empty');
-  (browser.tabs.query as jest.Mock).mockResolvedValue([{ url: 'https://example.com/' }]);
+  (browser.tabs.query as Mock).mockResolvedValue([{ url: 'https://example.com/' }]);
   await refresh();
   expect(store.getState().sitePage.stockCode).toBe('');
   expect(store.getState().financialStatement.status).toBe('idle');

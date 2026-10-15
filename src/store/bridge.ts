@@ -13,19 +13,30 @@ import type { AppStore, RootState } from './store';
 const portName = 'store';
 const replaceState = createAction<RootState>('bridge/replaceState');
 
-// MV3 では起動直後の接続を取りこぼさないよう、service worker の初期化時に同期的に呼ぶ
-export const exposeStore = (store: AppStore) => {
+// MV3 では起動直後の接続を取りこぼさないよう、service worker の初期化時に同期的に呼ぶ。
+// ready が解決するまで（store の状態を戻し終えるまで）は、状態を送らず、受け取った dispatch も処理しない
+export const exposeStore = (store: AppStore, ready: Promise<void> = Promise.resolve()) => {
   browser.runtime.onConnect.addListener((port: Runtime.Port) => {
     if (port.name !== portName) {
       return;
     }
-    const send = () => port.postMessage(store.getState());
-    const unsubscribe = store.subscribe(send);
+    let unsubscribe: (() => void) | undefined;
+    let connected = true;
     port.onMessage.addListener((action) => {
-      store.dispatch(action as UnknownAction);
+      void ready.then(() => store.dispatch(action as UnknownAction));
     });
-    port.onDisconnect.addListener(unsubscribe);
-    send();
+    port.onDisconnect.addListener(() => {
+      connected = false;
+      unsubscribe?.();
+    });
+    void ready.then(() => {
+      if (!connected) {
+        return;
+      }
+      const send = () => port.postMessage(store.getState());
+      unsubscribe = store.subscribe(send);
+      send();
+    });
   });
 };
 

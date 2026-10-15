@@ -26,6 +26,11 @@ const runtime = vi.hoisted(() => {
   const backgroundPorts: Port[] = [];
   return {
     backgroundPorts,
+    // service worker の停止を模す: 接続中のポートを切断し、以降の接続は起動し直した background だけが受ける
+    stopBackground: () => {
+      connectListeners.length = 0;
+      backgroundPorts.forEach((port) => port.disconnect());
+    },
     api: {
       onConnect: {
         addListener: (listener: (port: Port) => void) => connectListeners.push(listener),
@@ -82,4 +87,28 @@ it('keeps the last state after the background stops and reconnects on the next d
   expect(runtime.backgroundPorts).toHaveLength(connections + 1);
   await vi.waitFor(() => expect(popup.getState().financialStatement.status).toBe('success'));
   expect(popup.getState().sitePage.stockCode).toBe('6758');
+});
+
+it('sends the restarted background state only after it has been restored', async () => {
+  runtime.stopBackground();
+  const restarted = configureStore({ reducer: { financialStatement, sitePage } });
+  let finishRestore = () => {};
+  exposeStore(
+    restarted,
+    new Promise<void>((resolve) => {
+      finishRestore = () => {
+        restarted.dispatch(changeStockCode('7203'));
+        restarted.dispatch(setStatus('error'));
+        resolve();
+      };
+    }),
+  );
+  let popup: Awaited<ReturnType<typeof connectStore>> | undefined;
+  void connectStore().then((store) => (popup = store));
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  expect(popup).toBeUndefined();
+
+  finishRestore();
+  await vi.waitFor(() => expect(popup).toBeDefined());
+  expect(popup?.getState()).toEqual(restarted.getState());
 });

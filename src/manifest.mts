@@ -46,7 +46,8 @@ const manifest = defineManifest(async (env) => ({
     '128': 'images/logo128.png',
   },
   // この拡張機能が使えるリソース
-  permissions: ['tabs'],
+  // storage: service worker が停止しても表示中のページの状態を残すため（storage.session）
+  permissions: ['storage', 'tabs'],
 }));
 
 export default manifest;

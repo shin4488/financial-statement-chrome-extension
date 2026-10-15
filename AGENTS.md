@@ -44,7 +44,7 @@ investee（https://investee.info）のブラウザ拡張。株式情報サイト
 ## 共通エージェント設定
 
 - 導入は [Makefile](Makefile) の `make setup` を使う。共通 skill の実体は plugin 側で編集する。
-- この拡張は ESLint・Prettier を使い、共通 hook の Biome は適用しない。既存の lint・ビルドで確認する。
+- この拡張は oxlint・Prettier を使い、共通 hook の Biome は適用しない。既存の lint・ビルドで確認する。
 
 ## 作業の進め方
 

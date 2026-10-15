@@ -87,7 +87,7 @@ yarn preview:popup
 yarn dev       # Vite の開発サーバ起動（HMR）
 yarn build     # 本番用ビルド（Chrome用 dist/ と Firefox用 dist-firefox-v2/ を生成）
 yarn test      # テストの実行
-yarn lint      # ESLint による静的検証
+yarn lint      # oxlint・Prettier・型チェックによる静的検証
 yarn compile   # GraphQL スキーマから TypeScript 型を再生成
 ```
 

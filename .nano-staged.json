@@ -1,4 +1,4 @@
 {
   "**/*": "prettier --ignore-unknown --ignore-path .gitignore --write",
-  "**/*.{js,ts,tsx}": "eslint --fix"
+  "**/*.{js,ts,tsx}": "oxlint --fix --deny-warnings"
 }

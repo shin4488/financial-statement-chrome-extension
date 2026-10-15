@@ -1,5 +1,6 @@
 import browser from 'webextension-polyfill';
-import store, { initializeWrappedStore } from '@/store/store';
+import { exposeStore } from '@/store/bridge';
+import store from '@/store/store';
 import { setResult, setStatus } from '@/store/slices/financialStatement';
 import { changeSiteDomain, changeStockCode } from '@/store/slices/sitePageSlice';
 import FinancialStatementService from './financialStatement/service';
@@ -7,7 +8,7 @@ import StringUtil from '@/utils/stringUtil';
 import { getValidSiteInstance } from './siteClassMapper';
 import { StockSite } from './stockSite/stockSite';
 
-initializeWrappedStore();
+exposeStore(store);
 
 let activePage = '';
 // タブ照会と財務取得は別々に完了順が逆転し得るため、それぞれ最新の要求を識別する。

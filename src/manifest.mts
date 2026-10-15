@@ -1,11 +1,7 @@
 import { defineManifest } from '@crxjs/vite-plugin';
-import { readFileSync } from 'node:fs';
+import packageJson from '../package.json' with { type: 'json' };
 
-// バージョンはpackage.jsonから取る。JSONのimportはVite次期の設定ローダで属性(with { type: 'json' })が必須になり、
-// このリポジトリのprettier 2がその構文を扱えないため、ファイルを読んで取り出す
-const { version } = JSON.parse(
-  readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
-) as { version: string };
+const { version } = packageJson;
 
 // NOTE: do not include src/ in paths,
 // vite root folder: src, public folder: public (based on the project root)

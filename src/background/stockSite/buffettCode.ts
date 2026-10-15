@@ -3,7 +3,10 @@ import { extractStockCode, stockCodeSegmentAfter } from './stockCode';
 import { StockSite } from './stockSite';
 
 export default class BuffettCode implements StockSite {
-  constructor(readonly pathname: string, readonly searchParams: URLSearchParams) {}
+  constructor(
+    readonly pathname: string,
+    readonly searchParams: URLSearchParams,
+  ) {}
 
   isValid(): boolean {
     const isStockPage = this.pathname.startsWith('/company/');

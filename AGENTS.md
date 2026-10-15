@@ -15,7 +15,7 @@ investee（https://investee.info）のブラウザ拡張。株式情報サイト
 
 ## アーキテクチャ
 
-`src/background/` がタブ・銘柄を判定して API を取得し、`src/store/` の webext-redux 経由で `src/popup/` に渡す。描画は `src/shared/financialCharts/`。接続先は下記の設定元を確認し、値を重複して管理しない。
+`src/background/` がタブ・銘柄を判定して API を取得し、`src/store/bridge.ts` の runtime ポート経由で `src/popup/` に渡す。描画は `src/shared/financialCharts/`。接続先は下記の設定元を確認し、値を重複して管理しない。
 
 - パスエイリアス `@/` = `src/`。UI コンポーネントはクラスコンポーネントが既存の流儀
 - チャートの科目・色・積み上げ順は API の返却値（colorRole・配列順序）が契約で、フロントで解釈・並べ替えをしない

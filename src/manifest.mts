@@ -46,7 +46,7 @@ const manifest = defineManifest(async (env) => ({
     '128': 'images/logo128.png',
   },
   // この拡張機能が使えるリソース
-  permissions: ['storage', 'tabs'],
+  permissions: ['tabs'],
 }));
 
 export default manifest;

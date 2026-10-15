@@ -15,6 +15,7 @@ vi.mock('webextension-polyfill', () => ({
   },
 }));
 vi.mock('./financialStatement/service', () => ({ default: vi.fn() }));
+vi.mock('@/store/bridge', () => ({ exposeStore: vi.fn() }));
 vi.mock('@/store/store', async () => {
   const { configureStore } =
     await vi.importActual<typeof import('@reduxjs/toolkit')>('@reduxjs/toolkit');
@@ -25,7 +26,6 @@ vi.mock('@/store/store', async () => {
     '@/store/slices/sitePageSlice',
   );
   return {
-    initializeWrappedStore: vi.fn(),
     default: configureStore({
       reducer: { financialStatement: financialStatement.default, sitePage: sitePage.default },
     }),

@@ -1,46 +1,42 @@
 import {
   ApolloClient,
+  HttpLink,
   InMemoryCache,
-  NormalizedCacheObject,
-  OperationVariables,
-  TypedDocumentNode,
+  type OperationVariables,
+  type TypedDocumentNode,
 } from '@apollo/client';
 import apiEndpoints from './apiEndpoints.json';
 
 export default class ApolloClientService {
-  static client: ApolloClient<NormalizedCacheObject> | null = null;
+  static client: ApolloClient | null = null;
   constructor() {
     if (ApolloClientService.client === null) {
       ApolloClientService.client = this.create();
     }
   }
 
-  create(): ApolloClient<NormalizedCacheObject> {
+  create(): ApolloClient {
     return new ApolloClient({
-      // financialReportsが本番未デプロイの間、開発ビルドはローカルdockerのバックエンドを参照する
-      uri:
-        import.meta.env.MODE === 'development' ? apiEndpoints.development : apiEndpoints.production,
+      link: new HttpLink({
+        // financialReportsが本番未デプロイの間、開発ビルドはローカルdockerのバックエンドを参照する
+        uri:
+          import.meta.env.MODE === 'development'
+            ? apiEndpoints.development
+            : apiEndpoints.production,
+      }),
       cache: new InMemoryCache(),
     });
   }
 
-  async query<
-    Query,
-    QueryVariables extends OperationVariables,
-    TVariables extends QueryVariables = QueryVariables,
-  >(document: TypedDocumentNode, variables?: TVariables) {
+  // 既定のerrorPolicy（none）では、GraphQL・通信のエラーは例外として呼び出し元へ伝わる
+  async query<TData, TVariables extends OperationVariables>(
+    document: TypedDocumentNode<TData, TVariables>,
+    variables: TVariables,
+  ) {
     if (ApolloClientService.client === null) {
       ApolloClientService.client = this.create();
     }
 
-    const result = await ApolloClientService.client.query<Query, QueryVariables>({
-      query: document,
-      variables: variables,
-    });
-    if (result.error !== undefined) {
-      throw Error(result.error.message);
-    }
-
-    return result;
+    return ApolloClientService.client.query<TData, TVariables>({ query: document, variables });
   }
 }

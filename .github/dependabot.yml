@@ -10,7 +10,7 @@ updates:
       npm:
         patterns: ['*']
     ignore:
-      # src/shared/ はコピー元（financial-statement）で Web 側の MUI v5 と拡張側の v6 の両方に対応させているため、メジャー更新はコピー元と合わせて行う
+      # src/shared/ はコピー元の Web 側と同じ実装を使うため、MUI のメジャー更新はコピー元と合わせて行う
       - dependency-name: '@mui/material'
         update-types: ['version-update:semver-major']
 

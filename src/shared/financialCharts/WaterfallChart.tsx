@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Stack, Typography } from '@mui/material';
-import { Bar, BarChart, Cell, LabelList, Tooltip, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, Cell, LabelList, Rectangle, Tooltip, XAxis, YAxis } from 'recharts';
 import { ChartUnavailable } from './ChartUnavailable';
 import { colorForRole, tooltipBackgroundColor } from './colorRoles';
 import { formatAmountInMillions } from './formatAmount';
@@ -132,12 +132,20 @@ export function WaterfallChart({ chart, width = '90%', height = 400 }: Waterfall
               }}
             />
             <Bar dataKey="base" stackId="w" fill="transparent" isAnimationActive={false} />
-            <Bar dataKey="span" stackId="w" isAnimationActive={false}>
+            <Bar
+              dataKey="span"
+              stackId="w"
+              isAnimationActive={false}
+              // rechartsは高さ0の棒を既定の形では描画対象から外し、ラベル（0）も出さない。形を明示して残す
+              shape={<Rectangle />}
+            >
               {/* 単位はグラフ外に表示し、バー上には百万円単位の数値だけを出す */}
               <LabelList
                 dataKey="value"
                 position="top"
-                formatter={(value: number) => formatAmountInMillions(value)}
+                formatter={(value) =>
+                  typeof value === 'number' ? formatAmountInMillions(value) : null
+                }
               />
               {rows.map((row) => (
                 <Cell

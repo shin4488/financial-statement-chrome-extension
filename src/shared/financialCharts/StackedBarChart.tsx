@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box } from '@mui/material';
-import { Bar, BarChart, LabelList, ResponsiveContainer, Tooltip, YAxis } from 'recharts';
+import { Bar, BarChart, LabelList, Rectangle, ResponsiveContainer, Tooltip, YAxis } from 'recharts';
 import { colorForRole, hiddenRoles, stackLabelColor, tooltipBackgroundColor } from './colorRoles';
 import { ChartUnavailable } from './ChartUnavailable';
 import { formatAmount } from './formatAmount';
@@ -124,12 +124,14 @@ export function StackedBarChart({ chart, width = '90%', height = 400 }: StackedB
               stackId="a"
               fill={colorForRole(colorRole)}
               isAnimationActive={false}
+              // rechartsは高さ0の棒を既定の形では描画対象から外し、ラベル（0%）も出さない。形を明示して残す
+              shape={<Rectangle />}
             >
               <LabelList
                 dataKey={`${key}Ratio`}
                 fill={stackLabelColor}
                 position="center"
-                formatter={(value: number) => `${label}: ${value}%`}
+                formatter={(value) => `${label}: ${value}%`}
               />
             </Bar>
           ))}

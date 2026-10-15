@@ -6,10 +6,18 @@ updates:
       interval: weekly
     cooldown:
       default-days: 7
+    # メジャー更新は移行作業が依存ごとに異なるため個別の PR にし、まとめて取り込めるマイナー・パッチだけをグループにする
     groups:
-      npm:
+      # 本体と型は同じメジャーでないと型チェックが通らないため、メジャー更新も含めて一緒に上げる
+      react:
+        patterns: ['react', 'react-dom', '@types/react', '@types/react-dom']
+      npm-minor-patch:
         patterns: ['*']
+        update-types: ['minor', 'patch']
     ignore:
+      # 型定義は実行環境（.nvmrc・Dockerfile）の Node と同じメジャーを使う。Node のメジャーを上げるときに合わせて上げる
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
       # src/shared/ はコピー元の Web 側と同じ実装を使うため、MUI のメジャー更新はコピー元と合わせて行う
       - dependency-name: '@mui/material'
         update-types: ['version-update:semver-major']

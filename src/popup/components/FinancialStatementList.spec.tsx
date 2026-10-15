@@ -10,19 +10,6 @@ import autoPlayStatus, { changeAutoPlayStatus } from '@/store/slices/autoPlaySta
 import sitePage from '@/store/slices/sitePageSlice';
 import type { FinancialStatementResult } from '@/background/financialStatement/result';
 
-// jsdomではアニメーションを描画できないため、motionの表示切替だけを同期化する。
-// カルーセル本体・前後移動・自動切替・Redux・指標コンポーネントは実装を使う。
-vi.mock('framer-motion', () => ({
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  motion: {
-    div: ({ children, animate }: { children: React.ReactNode; animate?: string }) => (
-      <div style={{ display: animate && animate !== 'center' ? 'none' : undefined }}>
-        {children}
-      </div>
-    ),
-  },
-}));
-
 const metric = { value: 0.1, status: 'AVAILABLE' as const };
 const report: FinancialStatementResult = {
   id: 'report-1',

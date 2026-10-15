@@ -39,7 +39,7 @@
     "webextension-polyfill": "^0.12.0"
   },
   "devDependencies": {
-    "@crxjs/vite-plugin": "^2.7.1",
+    "@crxjs/vite-plugin": "^3.0.0",
     "@graphql-codegen/cli": "^7.4.5",
     "@graphql-codegen/client-preset": "^6.2.2",
     "@parcel/watcher": "^2.6.0",

@@ -16,5 +16,5 @@ export const extractStockCode = (candidate: string | undefined | null): string =
 // パス全体から数字のみを抽出すると、英数字コードが化ける・後続セグメントの数字が混入するため
 export const stockCodeSegmentAfter = (pathname: string, prefixSegment: string): string => {
   const segments = pathname.split('/').filter((segment) => segment !== '');
-  return segments[0] === prefixSegment ? segments[1] ?? '' : '';
+  return segments[0] === prefixSegment ? (segments[1] ?? '') : '';
 };

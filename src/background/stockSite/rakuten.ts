@@ -3,7 +3,10 @@ import { extractStockCode } from './stockCode';
 import { StockSite } from './stockSite';
 
 export default class Rakuten implements StockSite {
-  constructor(readonly pathname: string, readonly searchParams: URLSearchParams) {}
+  constructor(
+    readonly pathname: string,
+    readonly searchParams: URLSearchParams,
+  ) {}
 
   isValid(): boolean {
     // 未ログイン時のパスとログイン時のパスが異なる

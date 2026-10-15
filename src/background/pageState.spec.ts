@@ -16,9 +16,8 @@ vi.mock('webextension-polyfill', () => ({
 }));
 vi.mock('./financialStatement/service', () => ({ default: vi.fn() }));
 vi.mock('@/store/store', async () => {
-  const { configureStore } = await vi.importActual<typeof import('@reduxjs/toolkit')>(
-    '@reduxjs/toolkit',
-  );
+  const { configureStore } =
+    await vi.importActual<typeof import('@reduxjs/toolkit')>('@reduxjs/toolkit');
   const financialStatement = await vi.importActual<
     typeof import('@/store/slices/financialStatement')
   >('@/store/slices/financialStatement');

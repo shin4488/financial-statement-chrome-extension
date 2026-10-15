@@ -1,12 +1,10 @@
 import { combineReducers, configureStore, type Action, type ThunkAction } from '@reduxjs/toolkit';
 
-import autoPlayStatusReducer from './slices/autoPlayStatusSlice';
 import financialStatementReducer from './slices/financialStatement';
 import sitePageReducer from './slices/sitePageSlice';
 
 const store = configureStore({
   reducer: combineReducers({
-    autoPlayStatus: autoPlayStatusReducer,
     financialStatement: financialStatementReducer,
     sitePage: sitePageReducer,
   }),

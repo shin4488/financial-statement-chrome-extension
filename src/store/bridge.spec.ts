@@ -1,8 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import { connectStore, exposeStore } from './bridge';
-import autoPlayStatus, { changeAutoPlayStatus } from './slices/autoPlayStatusSlice';
 import financialStatement, { setStatus } from './slices/financialStatement';
-import sitePage from './slices/sitePageSlice';
+import sitePage, { changeStockCode } from './slices/sitePageSlice';
 
 const runtime = vi.hoisted(() => {
   type Listener = (message?: unknown) => void;
@@ -53,7 +52,7 @@ const runtime = vi.hoisted(() => {
 });
 vi.mock('webextension-polyfill', () => ({ default: { runtime: runtime.api } }));
 
-const background = configureStore({ reducer: { autoPlayStatus, financialStatement, sitePage } });
+const background = configureStore({ reducer: { financialStatement, sitePage } });
 exposeStore(background);
 
 it('mirrors the background state and forwards popup dispatches to the background store', async () => {
@@ -61,9 +60,9 @@ it('mirrors the background state and forwards popup dispatches to the background
   const popup = await connectStore();
   expect(popup.getState()).toEqual(background.getState());
 
-  popup.dispatch(changeAutoPlayStatus(false));
-  await vi.waitFor(() => expect(background.getState().autoPlayStatus.isAutoPlay).toBe(false));
-  await vi.waitFor(() => expect(popup.getState().autoPlayStatus.isAutoPlay).toBe(false));
+  popup.dispatch(changeStockCode('7203'));
+  await vi.waitFor(() => expect(background.getState().sitePage.stockCode).toBe('7203'));
+  await vi.waitFor(() => expect(popup.getState().sitePage.stockCode).toBe('7203'));
 
   background.dispatch(setStatus('error'));
   await vi.waitFor(() => expect(popup.getState().financialStatement.status).toBe('error'));
@@ -78,9 +77,9 @@ it('keeps the last state after the background stops and reconnects on the next d
   expect(popup.getState().financialStatement.status).toBe('error');
   expect(runtime.backgroundPorts).toHaveLength(connections);
 
-  popup.dispatch(changeAutoPlayStatus(true));
-  await vi.waitFor(() => expect(background.getState().autoPlayStatus.isAutoPlay).toBe(true));
+  popup.dispatch(changeStockCode('6758'));
+  await vi.waitFor(() => expect(background.getState().sitePage.stockCode).toBe('6758'));
   expect(runtime.backgroundPorts).toHaveLength(connections + 1);
   await vi.waitFor(() => expect(popup.getState().financialStatement.status).toBe('success'));
-  expect(popup.getState().autoPlayStatus.isAutoPlay).toBe(true);
+  expect(popup.getState().sitePage.stockCode).toBe('6758');
 });

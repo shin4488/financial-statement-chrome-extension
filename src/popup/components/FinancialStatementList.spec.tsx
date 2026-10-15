@@ -6,7 +6,6 @@ import FinancialStatementList from './FinancialStatementList';
 import { trackEvent } from '../analytics';
 vi.mock('../analytics', () => ({ trackEvent: vi.fn() }));
 import financialStatement, { setResult } from '@/store/slices/financialStatement';
-import autoPlayStatus, { changeAutoPlayStatus } from '@/store/slices/autoPlayStatusSlice';
 import sitePage from '@/store/slices/sitePageSlice';
 import type { FinancialStatementResult } from '@/background/financialStatement/result';
 
@@ -44,15 +43,15 @@ const report: FinancialStatementResult = {
 };
 
 function setup(reports = [report], autoPlay = false) {
-  const store = configureStore({ reducer: { financialStatement, autoPlayStatus, sitePage } });
+  const store = configureStore({ reducer: { financialStatement, sitePage } });
   store.dispatch(setResult(reports));
-  store.dispatch(changeAutoPlayStatus(autoPlay));
-  render(
+  const view = (isAutoPlay: boolean) => (
     <Provider store={store}>
-      <FinancialStatementList />
-    </Provider>,
+      <FinancialStatementList isAutoPlay={isAutoPlay} />
+    </Provider>
   );
-  return store;
+  const { rerender } = render(view(autoPlay));
+  return { store, setAutoPlay: (isAutoPlay: boolean) => rerender(view(isAutoPlay)) };
 }
 
 function settle() {
@@ -114,7 +113,7 @@ it('BS → PL → CF → フリーCF → ROE・ROAの順に切り替わり、前
 });
 
 it('自動切替で指標にも進み、OFFにすると停止する', () => {
-  const store = setup([report], true);
+  const { setAutoPlay } = setup([report], true);
   for (let i = 0; i < 4; i += 1) {
     act(() => {
       vi.advanceTimersByTime(5000);
@@ -123,9 +122,7 @@ it('自動切替で指標にも進み、OFFにすると停止する', () => {
   }
   expect(screen.getByLabelText('ROE：10.0%')).toBeVisible();
   expect(trackEvent).not.toHaveBeenCalled();
-  act(() => {
-    store.dispatch(changeAutoPlayStatus(false));
-  });
+  setAutoPlay(false);
   act(() => {
     vi.advanceTimersByTime(10000);
   });
@@ -136,7 +133,7 @@ it('旧キャッシュの指標欠損でも開けて、再取得した企業公�
   const { financialIndicators: omitted, ...legacy } = report;
   expect(omitted).toBeDefined();
   // 更新前に永続化されたJSONは新しい必須フィールドを持たない。
-  const store = setup([legacy as FinancialStatementResult]);
+  const { store } = setup([legacy as FinancialStatementResult]);
   fireEvent.click(screen.getByRole('button', { name: 'carousel indicator 5' }));
   settle();
   expect(screen.getAllByText('データなし')).toHaveLength(7);
@@ -160,7 +157,7 @@ it('旧キャッシュの指標欠損でも開けて、再取得した企業公�
 });
 
 it('年度ごとのカードに対応する値を表示し、空の取得結果でも落ちない', () => {
-  const store = setup([
+  const { store } = setup([
     report,
     {
       ...report,

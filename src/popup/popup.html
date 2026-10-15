@@ -6,20 +6,22 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title>Popup</title>
     <style>
-      /* ポップアップ窓のサイズはここで完全に固定する（幅28rem × 高さ600px=Chromeの上限）。
+      /* ポップアップ窓の希望サイズはhtmlで完全に固定する（幅28rem × 高さ600px=Chromeの上限）。
          Chromeは文書の希望サイズから窓サイズを推定するが、その推定に任せると
          ・スタイル適用前の一瞬やカルーセル内部の帯を実寸とみなして窓幅が上限800pxに張り付く
          ・文書自体が縦スクロールすると窓幅にスクロールバー分が足されて右に隙間ができる
-         という2つの事故が起きる。窓サイズをhtmlで固定し、スクロールはbodyの内側に
-         閉じ込めることで、推定を一切働かせない */
+         という2つの事故が起きる。
+         ただし画面の空きが足りないとChromeは窓を600pxより低くする。表示（body）は
+         希望サイズではなく実際の窓に合わせ、スクロールはその内側に閉じ込める
+         （600pxのままだと下端が窓の外に出て末尾が隠れ、文書ごとずれると上部のバーも隠れる） */
       html {
         width: 28rem;
         height: 600px;
         overflow: hidden;
       }
       body {
-        width: 28rem;
-        height: 600px;
+        position: fixed;
+        inset: 0;
         margin: 0;
         overflow-y: auto;
       }

@@ -42,10 +42,23 @@ interface AppCarouselState {
   // 切替中だけ、直前のスライドを退出アニメーションのために表示する
   previous: number | null;
   forward: boolean;
+  // スライドごとの key。表示から外れるたびに変えて、スライドを作り直す
+  generations: number[];
+}
+
+// 表示から外れたスライドは作り直し、ツールチップの表示などの操作中の状態を次の表示へ持ち越さない。
+// 非表示のスライドには、マウスが離れたことが届かないことがある
+function hide(generations: number[], index: number | null): number[] {
+  if (index === null) {
+    return generations;
+  }
+  const next = [...generations];
+  next[index] = (next[index] ?? 0) + 1;
+  return next;
 }
 
 export default class AppCarousel extends React.Component<AppCarouselProps, AppCarouselState> {
-  state: AppCarouselState = { active: 0, previous: null, forward: true };
+  state: AppCarouselState = { active: 0, previous: null, forward: true, generations: [] };
   private autoPlayTimer?: ReturnType<typeof setInterval>;
   private exitTimer?: ReturnType<typeof setTimeout>;
 
@@ -67,8 +80,7 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
   }
 
   private show(index: number, forward: boolean, manual: boolean): void {
-    const { active } = this.state;
-    if (index === active) {
+    if (index === this.state.active) {
       return;
     }
     if (manual) {
@@ -78,8 +90,22 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
       });
     }
     clearTimeout(this.exitTimer);
-    this.setState({ active: index, previous: active, forward });
-    this.exitTimer = setTimeout(() => this.setState({ previous: null }), duration);
+    this.setState((state) => ({
+      active: index,
+      previous: state.active,
+      forward,
+      // 退出中に次の切替が来たら、退出中だったスライドはここで表示から外れる
+      generations:
+        state.previous === index ? state.generations : hide(state.generations, state.previous),
+    }));
+    this.exitTimer = setTimeout(
+      () =>
+        this.setState(({ previous, generations }) => ({
+          previous: null,
+          generations: hide(generations, previous),
+        })),
+      duration,
+    );
   }
 
   private move(step: 1 | -1, manual = false): void {
@@ -87,14 +113,16 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
   }
 
   render(): React.ReactNode {
-    const { active, previous, forward } = this.state;
+    const { active, previous, forward, generations } = this.state;
     const animation = `${duration}ms ease-in-out`;
     return (
       <Box position="relative" overflow="hidden">
         {React.Children.map(this.props.children, (child, index) => {
+          const key = generations[index] ?? 0;
           if (index === active) {
             return (
               <Box
+                key={key}
                 position="relative"
                 sx={{
                   animation:
@@ -109,6 +137,7 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
           }
           return (
             <Box
+              key={key}
               position="absolute"
               top={0}
               width="100%"

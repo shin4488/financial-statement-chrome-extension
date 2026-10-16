@@ -13,34 +13,18 @@ import {
   Typography,
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
-import { AppDispatch } from '@/store/store';
 import { RootState } from '@/store/store';
-import { changeAutoPlayStatus } from '@/store/slices/autoPlayStatusSlice';
-import { bindActionCreators } from '@reduxjs/toolkit';
 
-const autoPlayStatusLocalStorageKey = 'investeeExtensionIsStatementAutoPlay';
-
-// store更新・アクセスするための設定
+// storeにアクセスするための設定
 const mapStateToProps = (state: RootState) => ({
-  isAutoPlay: state.autoPlayStatus.isAutoPlay,
   stockCode: state.sitePage.stockCode,
 });
-const mapDispatchToProps = (dispatch: AppDispatch) => ({
-  actions: bindActionCreators({ changeAutoPlayStatus }, dispatch),
-});
-type DefaultLayoutWithStoreProps = DefaultLayoutProps &
-  ReturnType<typeof mapStateToProps> &
-  ReturnType<typeof mapDispatchToProps>;
+type DefaultLayoutWithStoreProps = DefaultLayoutProps & ReturnType<typeof mapStateToProps>;
 
 class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
   state = {
     analyticsEnabled: localStorage.getItem('investeeExtensionAnalyticsEnabled') !== 'false',
   };
-
-  componentDidMount(): void {
-    const isAutoPlay = (localStorage.getItem(autoPlayStatusLocalStorageKey) || 'true') === 'true';
-    this.props.actions.changeAutoPlayStatus(isAutoPlay);
-  }
 
   render(): React.ReactNode {
     // 複数ページ共通で使用したい内容があればこのコンポーネントに記述する。
@@ -63,11 +47,7 @@ class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
                                 ? 'autoplay_on'
                                 : 'autoplay_off',
                             });
-                            this.props.actions.changeAutoPlayStatus(event.target.checked);
-                            localStorage.setItem(
-                              autoPlayStatusLocalStorageKey,
-                              String(event.target.checked),
-                            );
+                            this.props.onAutoPlayChange(event.target.checked);
                           }}
                         />
                       }
@@ -143,4 +123,4 @@ class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
   }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(DefaultLayout);
+export default connect(mapStateToProps)(DefaultLayout);

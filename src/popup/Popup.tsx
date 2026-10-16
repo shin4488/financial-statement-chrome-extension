@@ -1,13 +1,23 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import FinancialStatementList from './components/FinancialStatementList';
 import DefaultLayout from './components/defaultLayout/DefaultLayout';
 import { trackEvent } from './analytics';
 import type { RootState } from '@/store/store';
 
+const autoPlayStorageKey = 'investeeExtensionIsStatementAutoPlay';
+
 const Popup = () => {
   const sitePage = useSelector((state: RootState) => state.sitePage);
   const { status, results } = useSelector((state: RootState) => state.financialStatement);
+  // 自動切替はポップアップだけの表示設定なので、background を経由せずポップアップの保存値を最初の描画から使う
+  const [isAutoPlay, setIsAutoPlay] = useState(
+    () => (localStorage.getItem(autoPlayStorageKey) || 'true') === 'true',
+  );
+  const changeAutoPlay = (value: boolean) => {
+    localStorage.setItem(autoPlayStorageKey, String(value));
+    setIsAutoPlay(value);
+  };
   const opened = useRef(false);
   const reported = useRef('');
   useEffect(() => {
@@ -39,8 +49,8 @@ const Popup = () => {
   }, [results, sitePage, status]);
 
   return (
-    <DefaultLayout>
-      <FinancialStatementList />
+    <DefaultLayout isAutoPlay={isAutoPlay} onAutoPlayChange={changeAutoPlay}>
+      <FinancialStatementList isAutoPlay={isAutoPlay} />
     </DefaultLayout>
   );
 };

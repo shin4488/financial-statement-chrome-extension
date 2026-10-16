@@ -12,21 +12,50 @@ import type { AppStore, RootState } from './store';
 // background の store を正とし、ポップアップには状態の写しを渡す。ポップアップの dispatch は background で処理する。
 const portName = 'store';
 const replaceState = createAction<RootState>('bridge/replaceState');
+const startedMessageType = 'bridge/started';
+
+type ExposeOptions = {
+  // 解決するまで（store の状態を戻し終えるまで）は、状態を送らず、受け取った dispatch も処理しない
+  ready?: Promise<void>;
+  // ポップアップが接続するたびに（開いたときと、接続し直したときに）呼ぶ。返した Promise が終わるまで、そのポップアップへ状態を送らない。
+  // 接続をきっかけに状態を変えるとき（失敗した取得をやり直すときなど）に、変える前の状態をポップアップに表示させない
+  onConnect?: () => Promise<unknown> | void;
+};
 
 // MV3 では起動直後の接続を取りこぼさないよう、service worker の初期化時に同期的に呼ぶ
-export const exposeStore = (store: AppStore) => {
+export const exposeStore = (
+  store: AppStore,
+  { ready = Promise.resolve(), onConnect }: ExposeOptions = {},
+) => {
   browser.runtime.onConnect.addListener((port: Runtime.Port) => {
     if (port.name !== portName) {
       return;
     }
-    const send = () => port.postMessage(store.getState());
-    const unsubscribe = store.subscribe(send);
+    // 接続時の処理が失敗しても、ポップアップが最初の状態を待ち続けないよう、状態は送る
+    const connectHandled = Promise.resolve()
+      .then(onConnect)
+      .catch(() => undefined);
+    let unsubscribe: (() => void) | undefined;
+    let connected = true;
     port.onMessage.addListener((action) => {
-      store.dispatch(action as UnknownAction);
+      void ready.then(() => store.dispatch(action as UnknownAction));
     });
-    port.onDisconnect.addListener(unsubscribe);
-    send();
+    port.onDisconnect.addListener(() => {
+      connected = false;
+      unsubscribe?.();
+    });
+    void Promise.all([ready, connectHandled]).then(() => {
+      if (!connected) {
+        return;
+      }
+      const send = () => port.postMessage(store.getState());
+      unsubscribe = store.subscribe(send);
+      send();
+    });
   });
+  // 停止中にタブの変化などで起動し直したことを、切断されたまま開いているポップアップへ知らせる。
+  // 開いているポップアップがなければ受け手がおらず失敗するが、知らせる相手がいないだけなので無視する
+  browser.runtime.sendMessage({ type: startedMessageType }).catch(() => undefined);
 };
 
 const createMirrorStore = (state: RootState, forward: Middleware) =>
@@ -51,7 +80,8 @@ export const connectStore = () =>
         }
         store.dispatch(replaceState(message as RootState));
       });
-      // 停止した service worker からは切断される。表示中の状態は保ち、次の dispatch で接続し直して起動させる
+      // 停止した service worker からは切断される。表示中の状態は保ち、service worker の起動の知らせか
+      // 次の dispatch で接続し直す（dispatch の場合は接続で service worker を起動させる）
       port.onDisconnect.addListener(() => {
         if (connection === port) {
           connection = undefined;
@@ -68,4 +98,9 @@ export const connectStore = () =>
       return action;
     };
     let connection: Runtime.Port | undefined = connect();
+    browser.runtime.onMessage.addListener((message: unknown) => {
+      if ((message as { type?: unknown } | null)?.type === startedMessageType) {
+        connection ??= connect();
+      }
+    });
   });

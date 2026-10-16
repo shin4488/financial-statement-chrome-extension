@@ -96,7 +96,14 @@ gh release view <version>
 
 [Chrome Web Store デベロッパーダッシュボード](https://chrome.google.com/webstore/devconsole) → 対象アイテム → 「パッケージ」→ スキルが作成した zip をアップロード → 審査に提出（ストアアカウントでの手動作業）。
 
-- `host_permissions` や `permissions` を変更した場合、審査で用途説明を求められることがある。本拡張の host_permissions は自社 API（investee.info）からの財務データ取得のためのもの
+- ダッシュボードの Privacy practices タブでは、manifest の権限ごとに用途説明の入力が必要（[Chrome Web Store のドキュメント](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy)）。`host_permissions` や `permissions` を追加・変更した版を申請する前に、次の用途と入力内容が合っているか確認する
+
+  | 権限                                            | 用途                                                                                                                                              |
+  | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | `host_permissions`（`https://investee.info/*`） | 自社 API（investee.info）からの財務データ取得                                                                                                     |
+  | `tabs`                                          | 表示中のタブの URL から、対応サイトの銘柄ページかを判定する                                                                                       |
+  | `storage`                                       | service worker が停止しても、表示中の銘柄の財務データを `storage.session`（メモリ上に置き、ブラウザを閉じると消える）に残し、取り直さずに表示する |
+
 - 審査は通常数時間〜数日
 - 公開後、ユーザーの Chrome は数時間ごとの自動更新チェックで新バージョンに切り替わる（`chrome://extensions` の「更新」で即時反映も可能）
 

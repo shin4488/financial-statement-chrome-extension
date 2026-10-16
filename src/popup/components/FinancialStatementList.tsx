@@ -20,11 +20,12 @@ const nonJgaapBadge: Record<string, string> = {
 };
 
 const mapStateToProps = (state: RootState) => ({
-  isAutoPlay: state.autoPlayStatus.isAutoPlay,
   status: state.financialStatement.status,
   financialStatementResults: state.financialStatement.results,
 });
-type FinancialStatementListWithStoreProps = ReturnType<typeof mapStateToProps>;
+type FinancialStatementListWithStoreProps = ReturnType<typeof mapStateToProps> & {
+  isAutoPlay: boolean;
+};
 
 class FinancialStatementList extends React.Component<FinancialStatementListWithStoreProps> {
   render(): React.ReactNode {

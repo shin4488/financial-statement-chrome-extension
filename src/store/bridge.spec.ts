@@ -133,6 +133,36 @@ it('sends the restarted background state only after it has been restored', async
   expect(popup?.getState()).toEqual(restarted.getState());
 });
 
+it('sends the first state only after the background has handled the connection', async () => {
+  let finishHandling = () => {};
+  const background = startBackground({
+    onConnect: () =>
+      new Promise<void>((resolve) => {
+        finishHandling = () => {
+          background.dispatch(setStatus('loading'));
+          resolve();
+        };
+      }),
+  });
+  background.dispatch(setStatus('error'));
+  let popup: Awaited<ReturnType<typeof connectStore>> | undefined;
+  void connectStore().then((store) => (popup = store));
+  await flush();
+  expect(popup).toBeUndefined();
+
+  finishHandling();
+  await vi.waitFor(() => expect(popup).toBeDefined());
+  expect(popup?.getState().financialStatement.status).toBe('loading');
+});
+
+it('still sends the state when handling the connection fails', async () => {
+  startBackground({ onConnect: () => Promise.reject(new Error('failed')) }).dispatch(
+    setStatus('error'),
+  );
+  const popup = await connectStore();
+  expect(popup.getState().financialStatement.status).toBe('error');
+});
+
 it('reconnects as soon as the background starts again while the popup stays open', async () => {
   startBackground().dispatch(changeStockCode('7203'));
   const popup = await connectStore();

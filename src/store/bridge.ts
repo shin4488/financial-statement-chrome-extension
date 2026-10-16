@@ -17,8 +17,9 @@ const startedMessageType = 'bridge/started';
 type ExposeOptions = {
   // 解決するまで（store の状態を戻し終えるまで）は、状態を送らず、受け取った dispatch も処理しない
   ready?: Promise<void>;
-  // ポップアップが接続するたびに（開いたときと、接続し直したときに）呼ぶ
-  onConnect?: () => void;
+  // ポップアップが接続するたびに（開いたときと、接続し直したときに）呼ぶ。返した Promise が終わるまで、そのポップアップへ状態を送らない。
+  // 接続をきっかけに状態を変えるとき（失敗した取得をやり直すときなど）に、変える前の状態をポップアップに表示させない
+  onConnect?: () => Promise<unknown> | void;
 };
 
 // MV3 では起動直後の接続を取りこぼさないよう、service worker の初期化時に同期的に呼ぶ
@@ -30,7 +31,10 @@ export const exposeStore = (
     if (port.name !== portName) {
       return;
     }
-    onConnect?.();
+    // 接続時の処理が失敗しても、ポップアップが最初の状態を待ち続けないよう、状態は送る
+    const connectHandled = Promise.resolve()
+      .then(onConnect)
+      .catch(() => undefined);
     let unsubscribe: (() => void) | undefined;
     let connected = true;
     port.onMessage.addListener((action) => {
@@ -40,7 +44,7 @@ export const exposeStore = (
       connected = false;
       unsubscribe?.();
     });
-    void ready.then(() => {
+    void Promise.all([ready, connectHandled]).then(() => {
       if (!connected) {
         return;
       }

@@ -114,10 +114,13 @@ const startServiceWorker = async () => {
       browser.windows.onFocusChanged.addListener.mock.lastCall?.[0](windowId);
       await flush();
     },
-    // ポップアップを開いたとき、または停止していた service worker へポップアップが接続し直したとき
+    // ポップアップを開いたとき、または停止していた service worker へポップアップが接続し直したとき。
+    // bridge は onConnect の Promise が終わってから状態を送るため、そのときの表示結果をポップアップが最初に受け取る
     connectPopup: async () => {
-      mocks.exposeStore.mock.lastCall?.[1]?.onConnect?.();
+      await mocks.exposeStore.mock.lastCall?.[1]?.onConnect?.();
+      const firstStatus = store.getState().financialStatement.status;
       await flush();
+      return firstStatus;
     },
   };
 };
@@ -243,6 +246,45 @@ it('retries a failed page when the popup connects, the tab or window is switched
   // 取得できたページは、ポップアップが接続しても取り直さない
   await restarted.connectPopup();
   expect(load).toHaveBeenCalledTimes(5);
+});
+
+it('sends a popup connecting to a failed page the retry, not the failure', async () => {
+  const loads = pendingLoads();
+  openTab('https://kabutan.jp/stock/?code=7203');
+  const { store, connectPopup } = await startServiceWorker();
+  loads[0].reject();
+  await flush();
+  expect(store.getState().financialStatement.status).toBe('error');
+
+  expect(await connectPopup()).toBe('loading');
+  expect(load).toHaveBeenCalledTimes(2);
+  // 取得できたページは、取り直さずにそのまま送る
+  loads[1].resolve([report]);
+  await flush();
+  expect(await connectPopup()).toBe('success');
+  expect(load).toHaveBeenCalledTimes(2);
+});
+
+it('sends a connecting popup the retry even when a later update takes over the check', async () => {
+  load.mockRejectedValue(new Error('offline'));
+  openTab('https://kabutan.jp/stock/?code=7203');
+  const { store, connectPopup, updateTab } = await startServiceWorker();
+  expect(store.getState().financialStatement.status).toBe('error');
+
+  // 接続の直後に表示中のタブの更新（iframe の読み込みなど）が届き、その確認のウィンドウ照会が遅れる
+  let finishQuery = () => {};
+  const shownWindow = { id: activeTab.windowId, focused: true };
+  browser.windows.getLastFocused.mockResolvedValueOnce(shownWindow).mockReturnValueOnce(
+    new Promise((resolve) => {
+      finishQuery = () => resolve(shownWindow);
+    }),
+  );
+  pendingLoads();
+  const connecting = connectPopup();
+  await updateTab({ status: 'loading' });
+  finishQuery();
+  expect(await connecting).toBe('loading');
+  expect(load).toHaveBeenCalledTimes(2);
 });
 
 it('follows the shown tab even when the current window cannot be queried', async () => {

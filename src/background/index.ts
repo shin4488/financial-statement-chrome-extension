@@ -70,11 +70,33 @@ const queryShownTab = async () => {
   return tab as Tabs.Tab | undefined;
 };
 
-const changeStateByActivatedTag = async () => {
+const loadFinancialStatement = async (loadId: number, stockCode: string) => {
+  try {
+    const statementResults = await new FinancialStatementService().load(stockCode);
+    // 同じページの更新通知が来ても結果を受け取る。別ページへ移動した結果は破棄する。
+    if (loadId !== loadSequence) {
+      return;
+    }
+    store.dispatch(setResult(statementResults));
+  } catch {
+    if (loadId === loadSequence) {
+      store.dispatch(setStatus('error'));
+    }
+  }
+};
+
+// 最後に始めた確認。確認は、表示中のページと比べ、取得が要るなら読み込み中にして取得を始めたところで終わる（取得の完了は待たない）
+let latestCheck: Promise<void> = Promise.resolve();
+
+const checkShownPage = async (): Promise<void> => {
   const requestId = ++requestSequence;
   const shownTab = await queryShownTab().catch(() => undefined);
+  // 打ち切った確認のやり直しの条件は、後から始まった確認が引き継ぐ。その確認が判定を終えるまで待つ
+  if (requestId !== requestSequence) {
+    return latestCheck;
+  }
   // 表示中のタブを特定できないとき（ウィンドウがないときなど）は、表示を変えない
-  if (requestId !== requestSequence || shownTab === undefined) {
+  if (shownTab === undefined) {
     return;
   }
   const retryOnError = retryConditions.splice(0).some((allows) => allows(shownTab.id));
@@ -97,18 +119,7 @@ const changeStateByActivatedTag = async () => {
   store.dispatch(setStatus('loading'));
   store.dispatch(changeSiteDomain(siteDomain));
   store.dispatch(changeStockCode(stockCode));
-  try {
-    const statementResults = await new FinancialStatementService().load(stockCode);
-    // 同じページの更新通知が来ても結果を受け取る。別ページへ移動した結果は破棄する。
-    if (loadId !== loadSequence) {
-      return;
-    }
-    store.dispatch(setResult(statementResults));
-  } catch {
-    if (loadId === loadSequence) {
-      store.dispatch(setStatus('error'));
-    }
-  }
+  void loadFinancialStatement(loadId, stockCode);
 };
 
 // 停止前の状態を戻してから、表示中のページと比べる
@@ -116,24 +127,28 @@ const onPageChanged = (retryOnError?: (activeTabId?: number) => boolean) => {
   if (retryOnError !== undefined) {
     retryConditions.push(retryOnError);
   }
-  void restored.then(changeStateByActivatedTag);
+  latestCheck = restored.then(checkShownPage);
+  return latestCheck;
 };
 // 失敗した取得は、ポップアップが接続したとき、タブ・ウィンドウを切り替えたとき、表示中のタブの URL が変わったときにやり直す。
 // 読み込み開始の通知（status: 'loading'）は iframe の読み込みでも届き、同じ URL での読み込み直しと区別できないため、条件にしない
 // （読み込み直したページは、ポップアップを開いたときにやり直す）。
-// 他のタブの更新やタイトルの変更などでは、表示中のページを確かめるだけで API は呼び直さない
+// 他のタブの更新やタイトルの変更などでは、表示中のページを確かめるだけで API は呼び直さない。
+// ポップアップへは確認を終えてから状態を送らせ、やり直す前の失敗を表示させない
 exposeStore(store, { ready: restored, onConnect: () => onPageChanged(() => true) });
-browser.tabs.onActivated.addListener(() => onPageChanged(() => true));
+browser.tabs.onActivated.addListener(() => void onPageChanged(() => true));
 browser.windows.onFocusChanged.addListener((windowId) => {
   // Chrome のウィンドウからフォーカスが外れただけなら、表示中のページは変わらない
   if (windowId !== browser.windows.WINDOW_ID_NONE) {
-    onPageChanged(() => true);
+    void onPageChanged(() => true);
   }
 });
 browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   updateAction(tab);
-  onPageChanged(changeInfo.url !== undefined ? (activeTabId) => activeTabId === tabId : undefined);
+  void onPageChanged(
+    changeInfo.url !== undefined ? (activeTabId) => activeTabId === tabId : undefined,
+  );
 });
 
 // service worker の起動は他のタブの更新などでも起きるため、失敗した取得はやり直さない（ポップアップの接続で起動したときは、接続でやり直す）
-onPageChanged();
+void onPageChanged();

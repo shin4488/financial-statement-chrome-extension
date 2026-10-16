@@ -41,7 +41,14 @@ vi.mock('@/store/bridge', () => ({ exposeStore: vi.fn() }));
 const { browser, load } = mocks;
 const report = { id: 'report-7203', companyName: 'トヨタ自動車' } as FinancialStatementResult;
 const flush = () => new Promise((resolve) => setTimeout(resolve));
-const openTab = (url: string) => browser.tabs.query.mockResolvedValue([{ url }]);
+type Tab = { id: number; active: boolean; url: string };
+// フォーカス中のウィンドウで表示中のタブ、他のウィンドウで表示中のタブ、バックグラウンドのタブ
+const activeTab: Tab = { id: 1, active: true, url: '' };
+const otherWindowTab: Tab = { id: 2, active: true, url: '' };
+const backgroundTab: Tab = { id: 3, active: false, url: '' };
+const openTab = (url: string) => {
+  activeTab.url = url;
+};
 // 取得のたびに、テストから結果を返せる Promise を作る
 const pendingLoads = () => {
   const loads: { resolve: (results: FinancialStatementResult[]) => void; reject: () => void }[] =
@@ -61,10 +68,19 @@ const startServiceWorker = async () => {
   const { default: store } = await import('@/store/store');
   await import('./index');
   await flush();
+  // 更新通知を渡してから結果を待つ。続けて届いた通知は、間を空けずに渡す
+  const updateTabOf = async (tab: Tab, ...changes: Record<string, string>[]) => {
+    changes.forEach((changeInfo) =>
+      browser.tabs.onUpdated.addListener.mock.lastCall?.[0](tab.id, changeInfo, { ...tab }),
+    );
+    await flush();
+  };
   return {
     store,
-    refresh: async () => {
-      browser.tabs.onUpdated.addListener.mock.lastCall?.[0]();
+    updateTab: (...changes: Record<string, string>[]) => updateTabOf(activeTab, ...changes),
+    updateTabOf,
+    activateTab: async () => {
+      browser.tabs.onActivated.addListener.mock.lastCall?.[0]({ tabId: activeTab.id });
       await flush();
     },
   };
@@ -74,29 +90,35 @@ beforeEach(() => {
   // 各テストで差し替えた応答を、vi.fn に渡した実装へ戻す
   vi.resetAllMocks();
   mocks.session.clear();
+  activeTab.url = '';
+  otherWindowTab.url = 'https://kabutan.jp/stock/?code=7203';
+  backgroundTab.url = 'https://example.com/';
+  browser.tabs.query.mockImplementation(async ({ active }: { active?: boolean }) =>
+    (active ? [activeTab] : [activeTab, otherWindowTab, backgroundTab]).map((tab) => ({ ...tab })),
+  );
 });
 
 it('ignores stale responses after changing companies, and distinguishes error and empty', async () => {
   const loads = pendingLoads();
   openTab('https://kabutan.jp/stock/?code=7203');
-  const { store, refresh } = await startServiceWorker();
+  const { store, updateTab } = await startServiceWorker();
   expect(store.getState().financialStatement.status).toBe('loading');
-  await refresh(); // 同じページの更新で二重に取得しない
+  await updateTab({ status: 'loading' }); // 同じページの読み込み直しで二重に取得しない
   expect(load).toHaveBeenCalledTimes(1);
   openTab('https://kabutan.jp/stock/?code=6758');
-  await refresh();
+  await updateTab({ status: 'loading', url: activeTab.url });
   loads[0].resolve([]);
   await flush();
   expect(store.getState().financialStatement.status).toBe('loading');
   loads[1].reject();
   await flush();
   expect(store.getState().financialStatement.status).toBe('error');
-  await refresh();
+  await updateTab({ status: 'loading' });
   loads[2].resolve([]);
   await flush();
   expect(store.getState().financialStatement.status).toBe('empty');
   openTab('https://example.com/');
-  await refresh();
+  await updateTab({ url: activeTab.url });
   expect(store.getState().sitePage.stockCode).toBe('');
   expect(store.getState().financialStatement.status).toBe('idle');
   expect(browser.action.disable).toHaveBeenCalled();
@@ -110,7 +132,7 @@ it('keeps the results after the service worker restarts and does not load the sa
 
   const restarted = await startServiceWorker();
   expect(restarted.store.getState()).toEqual(first.store.getState());
-  await restarted.refresh();
+  await restarted.updateTab({ status: 'loading' });
   expect(load).toHaveBeenCalledTimes(1);
 });
 
@@ -139,4 +161,30 @@ it('still follows the active page when the state cannot be read or saved', async
   const { store } = await startServiceWorker();
   expect(store.getState().sitePage).toEqual({ siteDomain: 'kabutan.jp', stockCode: '6758' });
   expect(store.getState().financialStatement.status).toBe('empty');
+});
+
+it('retries a failed page when its tab loads again or changes its URL, not on other updates or a restart', async () => {
+  load.mockRejectedValue(new Error('offline'));
+  openTab('https://kabutan.jp/stock/?code=7203');
+  const first = await startServiceWorker();
+  expect(first.store.getState().financialStatement.status).toBe('error');
+  await first.updateTabOf(backgroundTab, { status: 'loading' });
+  await first.updateTabOf(otherWindowTab, { status: 'loading' });
+  await first.updateTab({ title: 'トヨタ自動車' });
+  await first.updateTab({ status: 'complete' });
+  const restarted = await startServiceWorker();
+  expect(load).toHaveBeenCalledTimes(1);
+  expect(restarted.store.getState().financialStatement.status).toBe('error');
+
+  // 読み込み直しの直後に、読み込み完了・タイトルの通知が続けて届いても、やり直しは取り消されない
+  await restarted.updateTab({ status: 'loading' }, { status: 'complete' }, { title: 'トヨタ' });
+  expect(load).toHaveBeenCalledTimes(2);
+  // 同じ銘柄のまま URL だけが変わったとき（サイト内の別タブなど）
+  openTab('https://kabutan.jp/stock/finance?code=7203');
+  await restarted.updateTab({ url: activeTab.url });
+  expect(load).toHaveBeenCalledTimes(3);
+  load.mockResolvedValue([report]);
+  await restarted.activateTab();
+  expect(load).toHaveBeenCalledTimes(4);
+  expect(restarted.store.getState().financialStatement.status).toBe('success');
 });

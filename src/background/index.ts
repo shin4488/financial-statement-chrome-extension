@@ -25,12 +25,17 @@ const clearPage = () => {
   store.dispatch(changeStockCode(''));
 };
 
+// 同じページで失敗した取得をやり直す条件（表示中のタブの ID を受け取って判定する）。
+// タブの照会は直後の通知で打ち切られることがあるため、条件は最後まで照会を終えたときにまとめて使う
+const retryConditions: ((activeTabId?: number) => boolean)[] = [];
+
 const changeStateByActivatedTag = async () => {
   const requestId = ++requestSequence;
   const activeTabs = await browser.tabs.query({ active: true, currentWindow: true });
   if (requestId !== requestSequence) {
     return;
   }
+  const retryOnError = retryConditions.splice(0).some((allows) => allows(activeTabs[0]?.id));
   if (activeTabs.length === 0 || StringUtil.isEmpty(activeTabs[0].url)) {
     clearPage();
     return;
@@ -58,7 +63,7 @@ const changeStateByActivatedTag = async () => {
   if (
     sitePage.siteDomain === activeTabUrl.hostname &&
     sitePage.stockCode === stockCode &&
-    financialStatement.status !== 'error'
+    !(financialStatement.status === 'error' && retryOnError)
   ) {
     return;
   }
@@ -81,9 +86,20 @@ const changeStateByActivatedTag = async () => {
 };
 
 // 停止前の状態を戻してから、表示中のページと比べる
-const onPageChanged = () => void restored.then(changeStateByActivatedTag);
-browser.tabs.onActivated.addListener(onPageChanged);
-browser.tabs.onUpdated.addListener(onPageChanged);
-browser.windows.onFocusChanged.addListener(onPageChanged);
+const onPageChanged = (retryOnError?: (activeTabId?: number) => boolean) => {
+  if (retryOnError !== undefined) {
+    retryConditions.push(retryOnError);
+  }
+  void restored.then(changeStateByActivatedTag);
+};
+// 失敗した取得は、タブ・ウィンドウを切り替えたときと、表示中のタブの読み込み開始・URL の変更でやり直す。
+// 他のタブの更新やタイトルの変更などでは、表示中のページを確かめるだけで API は呼び直さない
+browser.tabs.onActivated.addListener(() => onPageChanged(() => true));
+browser.windows.onFocusChanged.addListener(() => onPageChanged(() => true));
+browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  const reloaded = changeInfo.status === 'loading' || changeInfo.url !== undefined;
+  onPageChanged(reloaded ? (activeTabId) => activeTabId === tabId : undefined);
+});
 
+// service worker の起動は他のタブの更新などでも起きるため、失敗した取得はやり直さない
 onPageChanged();

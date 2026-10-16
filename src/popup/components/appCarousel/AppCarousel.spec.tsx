@@ -8,9 +8,13 @@ vi.mock('../../analytics', () => ({ trackEvent: vi.fn() }));
 function HoverSlide({ name }: { name: string }) {
   const [hovered, setHovered] = React.useState(false);
   return (
-    <div onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+    <section
+      aria-label={name}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
       {hovered ? `${name}（ホバー中）` : name}
-    </div>
+    </section>
   );
 }
 
@@ -26,6 +30,10 @@ function renderCarousel() {
 
 function click(name: string) {
   fireEvent.click(screen.getByRole('button', { name }));
+}
+
+function shownSlides() {
+  return screen.getAllByRole('region').map((slide) => slide.getAttribute('aria-label'));
 }
 
 function settle() {
@@ -69,3 +77,15 @@ it.each([
     expect(screen.getByText('BS')).toBeVisible();
   },
 );
+
+it('表示中のスライドだけを見せ、切替中に出ていくスライドも支援技術には伝えない', () => {
+  renderCarousel();
+  expect(shownSlides()).toEqual(['BS']);
+  expect(screen.getByText('PL')).not.toBeVisible();
+  click('Next');
+  expect(shownSlides()).toEqual(['PL']);
+  settle();
+  expect(shownSlides()).toEqual(['PL']);
+  expect(screen.getByText('PL')).toBeVisible();
+  expect(screen.getByText('BS')).not.toBeVisible();
+});

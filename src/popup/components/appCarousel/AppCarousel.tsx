@@ -47,7 +47,8 @@ interface AppCarouselState {
 }
 
 // 表示から外れたスライドは作り直し、ツールチップの表示などの操作中の状態を次の表示へ持ち越さない。
-// 非表示のスライドには、マウスが離れたことが届かないことがある
+// マウスを動かさずに切り替えると、隠れたスライドにマウスが離れたことが届くとは限らない。
+// Recharts のツールチップは visibility を自身で指定するため、状態が残ると隠れたスライドからも見える
 function hide(generations: number[], index: number | null): number[] {
   if (index === null) {
     return generations;
@@ -117,39 +118,32 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
     const animation = `${duration}ms ease-in-out`;
     return (
       <Box position="relative" overflow="hidden">
-        {React.Children.map(this.props.children, (child, index) => {
-          const key = generations[index] ?? 0;
-          if (index === active) {
+        {/* 全スライドを同じセルに重ね、高さを最も高いスライドに揃える。表示中のスライドの高さに合わせると、
+            切替のたびに下端のナビボタンが上下に動き、出ていくスライドがナビ行に重なる */}
+        <Box display="grid" gridTemplateColumns="minmax(0, 1fr)">
+          {React.Children.map(this.props.children, (child, index) => {
+            const leaving = index === previous;
+            let slideAnimation: string | undefined;
+            if (index === active && previous !== null) {
+              slideAnimation = `${forward ? slide.enterFromRight : slide.enterFromLeft} ${animation}`;
+            } else if (leaving) {
+              slideAnimation = `${forward ? slide.exitToLeft : slide.exitToRight} ${animation} forwards`;
+            }
             return (
               <Box
-                key={key}
-                position="relative"
+                key={generations[index] ?? 0}
+                aria-hidden={index === active ? undefined : true}
                 sx={{
-                  animation:
-                    previous === null
-                      ? undefined
-                      : `${forward ? slide.enterFromRight : slide.enterFromLeft} ${animation}`,
+                  gridArea: '1 / 1',
+                  visibility: index === active || leaving ? undefined : 'hidden',
+                  animation: slideAnimation,
                 }}
               >
                 {child}
               </Box>
             );
-          }
-          return (
-            <Box
-              key={key}
-              position="absolute"
-              top={0}
-              width="100%"
-              sx={{
-                display: index === previous ? undefined : 'none',
-                animation: `${forward ? slide.exitToLeft : slide.exitToRight} ${animation} forwards`,
-              }}
-            >
-              {child}
-            </Box>
-          );
-        })}
+          })}
+        </Box>
         <IconButton
           aria-label="Previous"
           onClick={() => this.move(-1, true)}

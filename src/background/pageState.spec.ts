@@ -3,9 +3,12 @@ import type { FinancialStatementResult } from './financialStatement/result';
 const mocks = vi.hoisted(() => {
   // storage.session はブラウザを閉じるまで残るため、service worker を起動し直しても同じ内容を返す
   const session = new Map<string, unknown>();
+  // アイコンの有効・無効はブラウザが持ち、service worker を起動し直しても残る。キー undefined は既定値
+  const action = new Map<number | undefined, boolean>();
   const load = vi.fn();
   return {
     session,
+    action,
     load,
     browser: {
       tabs: {
@@ -14,7 +17,14 @@ const mocks = vi.hoisted(() => {
         onUpdated: { addListener: vi.fn() },
       },
       windows: { onFocusChanged: { addListener: vi.fn() } },
-      action: { enable: vi.fn(), disable: vi.fn() },
+      action: {
+        enable: vi.fn(async (tabId?: number) => {
+          action.set(tabId, true);
+        }),
+        disable: vi.fn(async (tabId?: number) => {
+          action.set(tabId, false);
+        }),
+      },
       storage: {
         session: {
           get: vi.fn(async (key: string) =>
@@ -49,6 +59,9 @@ const backgroundTab: Tab = { id: 3, active: false, url: '' };
 const openTab = (url: string) => {
   activeTab.url = url;
 };
+// マニフェストの既定は有効。タブごとの設定がなければ既定値で表示される
+const iconEnabled = (tabId: number) =>
+  mocks.action.get(tabId) ?? mocks.action.get(undefined) ?? true;
 // 取得のたびに、テストから結果を返せる Promise を作る
 const pendingLoads = () => {
   const loads: { resolve: (results: FinancialStatementResult[]) => void; reject: () => void }[] =
@@ -83,6 +96,16 @@ const startServiceWorker = async () => {
       browser.tabs.onActivated.addListener.mock.lastCall?.[0]({ tabId: activeTab.id });
       await flush();
     },
+    // ページを読み込むと、そのタブのアイコンの設定は消えてから読み込み開始が通知される
+    navigateTab: async (tab: Tab, url: string) => {
+      tab.url = url;
+      mocks.action.delete(tab.id);
+      await updateTabOf(tab, { status: 'loading', url });
+    },
+    focusWindow: async () => {
+      browser.windows.onFocusChanged.addListener.mock.lastCall?.[0](1);
+      await flush();
+    },
   };
 };
 
@@ -90,6 +113,7 @@ beforeEach(() => {
   // 各テストで差し替えた応答を、vi.fn に渡した実装へ戻す
   vi.resetAllMocks();
   mocks.session.clear();
+  mocks.action.clear();
   activeTab.url = '';
   otherWindowTab.url = 'https://kabutan.jp/stock/?code=7203';
   backgroundTab.url = 'https://example.com/';
@@ -121,7 +145,7 @@ it('ignores stale responses after changing companies, and distinguishes error an
   await updateTab({ url: activeTab.url });
   expect(store.getState().sitePage.stockCode).toBe('');
   expect(store.getState().financialStatement.status).toBe('idle');
-  expect(browser.action.disable).toHaveBeenCalled();
+  expect(iconEnabled(activeTab.id)).toBe(false);
 });
 
 it('keeps the results after the service worker restarts and does not load the same page again', async () => {
@@ -187,4 +211,23 @@ it('retries a failed page when its tab loads again or changes its URL, not on ot
   await restarted.activateTab();
   expect(load).toHaveBeenCalledTimes(4);
   expect(restarted.store.getState().financialStatement.status).toBe('success');
+});
+
+it('enables the icon per tab, so a stock page in a window without focus stays enabled', async () => {
+  openTab('https://example.com/');
+  const { navigateTab, focusWindow } = await startServiceWorker();
+  expect(iconEnabled(activeTab.id)).toBe(false);
+  expect(iconEnabled(otherWindowTab.id)).toBe(true);
+  expect(iconEnabled(backgroundTab.id)).toBe(false);
+
+  await focusWindow();
+  expect(iconEnabled(otherWindowTab.id)).toBe(true);
+  await navigateTab(otherWindowTab, otherWindowTab.url);
+  expect(iconEnabled(otherWindowTab.id)).toBe(true);
+  // バックグラウンドのタブも、切り替える前から銘柄ページの状態にする（財務データは取得しない）
+  await navigateTab(backgroundTab, 'https://kabutan.jp/stock/?code=6758');
+  expect(iconEnabled(backgroundTab.id)).toBe(true);
+  await navigateTab(otherWindowTab, 'https://example.com/other');
+  expect(iconEnabled(otherWindowTab.id)).toBe(false);
+  expect(load).not.toHaveBeenCalled();
 });

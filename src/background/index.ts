@@ -10,7 +10,6 @@ import { getValidSiteInstance } from './siteClassMapper';
 import { StockSite } from './stockSite/stockSite';
 
 const restored = restoreSessionState(store);
-exposeStore(store, restored);
 
 // 対応サイトの銘柄ページなら、サイトと証券コードを返す
 const stockPageOf = (url: string | undefined) => {
@@ -119,8 +118,11 @@ const onPageChanged = (retryOnError?: (activeTabId?: number) => boolean) => {
   }
   void restored.then(changeStateByActivatedTag);
 };
-// 失敗した取得は、タブ・ウィンドウを切り替えたときと、表示中のタブの読み込み開始・URL の変更でやり直す。
+// 失敗した取得は、ポップアップが接続したとき、タブ・ウィンドウを切り替えたとき、表示中のタブの URL が変わったときにやり直す。
+// 読み込み開始の通知（status: 'loading'）は iframe の読み込みでも届き、同じ URL での読み込み直しと区別できないため、条件にしない
+// （読み込み直したページは、ポップアップを開いたときにやり直す）。
 // 他のタブの更新やタイトルの変更などでは、表示中のページを確かめるだけで API は呼び直さない
+exposeStore(store, { ready: restored, onConnect: () => onPageChanged(() => true) });
 browser.tabs.onActivated.addListener(() => onPageChanged(() => true));
 browser.windows.onFocusChanged.addListener((windowId) => {
   // Chrome のウィンドウからフォーカスが外れただけなら、表示中のページは変わらない
@@ -130,9 +132,8 @@ browser.windows.onFocusChanged.addListener((windowId) => {
 });
 browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   updateAction(tab);
-  const reloaded = changeInfo.status === 'loading' || changeInfo.url !== undefined;
-  onPageChanged(reloaded ? (activeTabId) => activeTabId === tabId : undefined);
+  onPageChanged(changeInfo.url !== undefined ? (activeTabId) => activeTabId === tabId : undefined);
 });
 
-// service worker の起動は他のタブの更新などでも起きるため、失敗した取得はやり直さない
+// service worker の起動は他のタブの更新などでも起きるため、失敗した取得はやり直さない（ポップアップの接続で起動したときは、接続でやり直す）
 onPageChanged();

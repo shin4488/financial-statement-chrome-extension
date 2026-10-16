@@ -71,10 +71,10 @@ const runtime = vi.hoisted(() => {
 vi.mock('webextension-polyfill', () => ({ default: { runtime: runtime.api } }));
 
 // service worker の起動を模す: 動いている background を止め、初期状態の store で始める
-const startBackground = (ready?: Promise<void>) => {
+const startBackground = (options?: Parameters<typeof exposeStore>[1]) => {
   runtime.stopBackground();
   const background = configureStore({ reducer: { financialStatement, sitePage } });
-  exposeStore(background, ready);
+  exposeStore(background, options);
   return background;
 };
 const flush = () => new Promise((resolve) => setTimeout(resolve, 10));
@@ -114,15 +114,15 @@ it('keeps the last state after the background disconnects and reconnects on the 
 
 it('sends the restarted background state only after it has been restored', async () => {
   let finishRestore = () => {};
-  const restarted = startBackground(
-    new Promise<void>((resolve) => {
+  const restarted = startBackground({
+    ready: new Promise<void>((resolve) => {
       finishRestore = () => {
         restarted.dispatch(changeStockCode('7203'));
         restarted.dispatch(setStatus('error'));
         resolve();
       };
     }),
-  );
+  });
   let popup: Awaited<ReturnType<typeof connectStore>> | undefined;
   void connectStore().then((store) => (popup = store));
   await flush();
@@ -156,4 +156,19 @@ it('does not connect twice when the popup itself started the background', async 
   expect(runtime.backgroundPorts).toHaveLength(1);
   background.dispatch(setStatus('empty'));
   await vi.waitFor(() => expect(popup.getState().financialStatement.status).toBe('empty'));
+});
+
+it('tells the background each time a popup connects, including after the background restarts', async () => {
+  const onConnect = vi.fn();
+  startBackground({ onConnect });
+  const popup = await connectStore();
+  expect(onConnect).toHaveBeenCalledTimes(1);
+
+  const onReconnect = vi.fn();
+  startBackground({ onConnect: onReconnect });
+  await vi.waitFor(() => expect(onReconnect).toHaveBeenCalledTimes(1));
+  popup.dispatch(changeStockCode('6758'));
+  await flush();
+  expect(onReconnect).toHaveBeenCalledTimes(1);
+  expect(onConnect).toHaveBeenCalledTimes(1);
 });

@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => {
     session,
     action,
     load,
+    exposeStore: vi.fn(),
     browser: {
       tabs: {
         query: vi.fn(),
@@ -51,7 +52,7 @@ const mocks = vi.hoisted(() => {
 });
 vi.mock('webextension-polyfill', () => ({ default: mocks.browser }));
 vi.mock('./financialStatement/service', () => ({ default: mocks.Service }));
-vi.mock('@/store/bridge', () => ({ exposeStore: vi.fn() }));
+vi.mock('@/store/bridge', () => ({ exposeStore: mocks.exposeStore }));
 
 const { browser, load } = mocks;
 const report = { id: 'report-7203', companyName: 'トヨタ自動車' } as FinancialStatementResult;
@@ -113,6 +114,11 @@ const startServiceWorker = async () => {
       browser.windows.onFocusChanged.addListener.mock.lastCall?.[0](windowId);
       await flush();
     },
+    // ポップアップを開いたとき、または停止していた service worker へポップアップが接続し直したとき
+    connectPopup: async () => {
+      mocks.exposeStore.mock.lastCall?.[1]?.onConnect?.();
+      await flush();
+    },
   };
 };
 
@@ -142,7 +148,7 @@ beforeEach(() => {
 it('ignores stale responses after changing companies, and distinguishes error and empty', async () => {
   const loads = pendingLoads();
   openTab('https://kabutan.jp/stock/?code=7203');
-  const { store, updateTab } = await startServiceWorker();
+  const { store, updateTab, activateTab } = await startServiceWorker();
   expect(store.getState().financialStatement.status).toBe('loading');
   await updateTab({ status: 'loading' }); // 同じページの読み込み直しで二重に取得しない
   expect(load).toHaveBeenCalledTimes(1);
@@ -154,7 +160,7 @@ it('ignores stale responses after changing companies, and distinguishes error an
   loads[1].reject();
   await flush();
   expect(store.getState().financialStatement.status).toBe('error');
-  await updateTab({ status: 'loading' });
+  await activateTab();
   loads[2].resolve([]);
   await flush();
   expect(store.getState().financialStatement.status).toBe('empty');
@@ -204,30 +210,39 @@ it('still follows the active page when the state cannot be read or saved', async
   expect(store.getState().financialStatement.status).toBe('empty');
 });
 
-it('retries a failed page when its tab loads again or changes its URL, not on other updates or a restart', async () => {
+it('retries a failed page when the popup connects, the tab or window is switched, or its URL changes', async () => {
   load.mockRejectedValue(new Error('offline'));
   openTab('https://kabutan.jp/stock/?code=7203');
   const first = await startServiceWorker();
   expect(first.store.getState().financialStatement.status).toBe('error');
   await first.updateTabOf(backgroundTab, { status: 'loading' });
   await first.updateTabOf(otherWindowTab, { status: 'loading' });
+  // iframe の読み込みとページの読み込み直しは、どちらも読み込み開始だけが通知され区別できない
+  await first.updateTab({ status: 'loading' }, { status: 'complete' });
   await first.updateTab({ title: 'トヨタ自動車' });
-  await first.updateTab({ status: 'complete' });
   const restarted = await startServiceWorker();
   expect(load).toHaveBeenCalledTimes(1);
   expect(restarted.store.getState().financialStatement.status).toBe('error');
 
-  // 読み込み直しの直後に、読み込み完了・タイトルの通知が続けて届いても、やり直しは取り消されない
-  await restarted.updateTab({ status: 'loading' }, { status: 'complete' }, { title: 'トヨタ' });
+  await restarted.connectPopup();
   expect(load).toHaveBeenCalledTimes(2);
-  // 同じ銘柄のまま URL だけが変わったとき（サイト内の別タブなど）
+  // 同じ銘柄のまま URL だけが変わったとき（サイト内の別タブなど）。直後に読み込み完了・タイトルの通知が続けて届いても、やり直しは取り消されない
   openTab('https://kabutan.jp/stock/finance?code=7203');
-  await restarted.updateTab({ url: activeTab.url });
+  await restarted.updateTab(
+    { status: 'loading', url: activeTab.url },
+    { status: 'complete' },
+    { title: 'トヨタ' },
+  );
   expect(load).toHaveBeenCalledTimes(3);
-  load.mockResolvedValue([report]);
   await restarted.activateTab();
   expect(load).toHaveBeenCalledTimes(4);
+  load.mockResolvedValue([report]);
+  await restarted.focusWindow();
+  expect(load).toHaveBeenCalledTimes(5);
   expect(restarted.store.getState().financialStatement.status).toBe('success');
+  // 取得できたページは、ポップアップが接続しても取り直さない
+  await restarted.connectPopup();
+  expect(load).toHaveBeenCalledTimes(5);
 });
 
 it('follows the shown tab even when the current window cannot be queried', async () => {

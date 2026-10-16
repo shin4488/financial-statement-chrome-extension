@@ -14,13 +14,23 @@ const portName = 'store';
 const replaceState = createAction<RootState>('bridge/replaceState');
 const startedMessageType = 'bridge/started';
 
-// MV3 では起動直後の接続を取りこぼさないよう、service worker の初期化時に同期的に呼ぶ。
-// ready が解決するまで（store の状態を戻し終えるまで）は、状態を送らず、受け取った dispatch も処理しない
-export const exposeStore = (store: AppStore, ready: Promise<void> = Promise.resolve()) => {
+type ExposeOptions = {
+  // 解決するまで（store の状態を戻し終えるまで）は、状態を送らず、受け取った dispatch も処理しない
+  ready?: Promise<void>;
+  // ポップアップが接続するたびに（開いたときと、接続し直したときに）呼ぶ
+  onConnect?: () => void;
+};
+
+// MV3 では起動直後の接続を取りこぼさないよう、service worker の初期化時に同期的に呼ぶ
+export const exposeStore = (
+  store: AppStore,
+  { ready = Promise.resolve(), onConnect }: ExposeOptions = {},
+) => {
   browser.runtime.onConnect.addListener((port: Runtime.Port) => {
     if (port.name !== portName) {
       return;
     }
+    onConnect?.();
     let unsubscribe: (() => void) | undefined;
     let connected = true;
     port.onMessage.addListener((action) => {

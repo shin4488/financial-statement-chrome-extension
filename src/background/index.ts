@@ -63,11 +63,12 @@ const retryConditions: ((activeTabId?: number) => boolean)[] = [];
 const changeStateByActivatedTag = async () => {
   const requestId = ++requestSequence;
   const activeTabs = await browser.tabs.query({ active: true, currentWindow: true });
-  if (requestId !== requestSequence) {
+  // 表示中のタブを照会できないとき（どのウィンドウにもフォーカスがないときなど）は、表示を変えない
+  if (requestId !== requestSequence || activeTabs.length === 0) {
     return;
   }
-  const retryOnError = retryConditions.splice(0).some((allows) => allows(activeTabs[0]?.id));
-  const page = stockPageOf(activeTabs[0]?.url);
+  const retryOnError = retryConditions.splice(0).some((allows) => allows(activeTabs[0].id));
+  const page = stockPageOf(activeTabs[0].url);
   if (page === undefined) {
     clearPage();
     return;
@@ -110,7 +111,12 @@ const onPageChanged = (retryOnError?: (activeTabId?: number) => boolean) => {
 // 失敗した取得は、タブ・ウィンドウを切り替えたときと、表示中のタブの読み込み開始・URL の変更でやり直す。
 // 他のタブの更新やタイトルの変更などでは、表示中のページを確かめるだけで API は呼び直さない
 browser.tabs.onActivated.addListener(() => onPageChanged(() => true));
-browser.windows.onFocusChanged.addListener(() => onPageChanged(() => true));
+browser.windows.onFocusChanged.addListener((windowId) => {
+  // Chrome のウィンドウからフォーカスが外れただけなら、表示中のページは変わらない
+  if (windowId !== browser.windows.WINDOW_ID_NONE) {
+    onPageChanged(() => true);
+  }
+});
 browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   updateAction(tab);
   const reloaded = changeInfo.status === 'loading' || changeInfo.url !== undefined;

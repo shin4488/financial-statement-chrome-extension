@@ -4,7 +4,7 @@ import packageJson from '../package.json' with { type: 'json' };
 const { version } = packageJson;
 
 // 配布物が動く最も古い Chrome。ビルドの target にも使い、出力するコードと申告する版を一致させる。
-// 依存の対応ブラウザのうち最も新しい下限に合わせる（Tailwind CSS 4 は Chrome 111 以上）
+// 依存が対応するブラウザの下限のうち、最も新しいものに合わせる
 export const minimumChromeVersion = 111;
 
 // NOTE: do not include src/ in paths,

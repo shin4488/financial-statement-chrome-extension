@@ -3,6 +3,10 @@ import packageJson from '../package.json' with { type: 'json' };
 
 const { version } = packageJson;
 
+// 配布物が動く最も古い Chrome。ビルドの target にも使い、出力するコードと申告する版を一致させる。
+// 依存が対応するブラウザの下限のうち、最も新しいものに合わせる
+export const minimumChromeVersion = 111;
+
 // NOTE: do not include src/ in paths,
 // vite root folder: src, public folder: public (based on the project root)
 // @see ../vite.config.mts
@@ -12,6 +16,8 @@ const manifest = defineManifest(async (env) => ({
   name: `${env.mode === 'development' ? '[Dev] ' : ''}investee | 投資のための企業分析をしよう！`,
   description: '上場企業の最新の財務三表を可視化します！株式の投資先選定に役立つ情報が満載です！',
   version,
+  // これより古い Chrome にはストアから新規インストール・更新させない（動かない版へ自動更新させない）
+  minimum_chrome_version: String(minimumChromeVersion),
   // ブラウザイベントの監視
   background: {
     service_worker: 'background/index.ts',

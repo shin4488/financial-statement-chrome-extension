@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 import { defineConfig } from 'vite';
 import { readFileSync } from 'node:fs';
-import manifest from './src/manifest.mts';
+import manifest, { minimumChromeVersion } from './src/manifest.mts';
 
 export default defineConfig((config) => {
   const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
@@ -31,6 +31,7 @@ export default defineConfig((config) => {
       outDir: resolve(import.meta.dirname, 'dist'),
       // root が src のため outDir がプロジェクトルート外扱いになり、明示しないと毎回警告が出る
       emptyOutDir: true,
+      target: `chrome${minimumChromeVersion}`,
       rolldownOptions: {
         output: {
           chunkFileNames: 'assets/chunk-[hash].js',

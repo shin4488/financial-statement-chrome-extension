@@ -17,7 +17,11 @@ const mocks = vi.hoisted(() => {
         onActivated: { addListener: vi.fn() },
         onUpdated: { addListener: vi.fn() },
       },
-      windows: { WINDOW_ID_NONE: -1, onFocusChanged: { addListener: vi.fn() } },
+      windows: {
+        WINDOW_ID_NONE: -1,
+        getLastFocused: vi.fn(),
+        onFocusChanged: { addListener: vi.fn() },
+      },
       action: {
         enable: vi.fn(async (tabId?: number) => {
           action.set(tabId, true);
@@ -52,16 +56,16 @@ vi.mock('@/store/bridge', () => ({ exposeStore: vi.fn() }));
 const { browser, load } = mocks;
 const report = { id: 'report-7203', companyName: 'トヨタ自動車' } as FinancialStatementResult;
 const flush = () => new Promise((resolve) => setTimeout(resolve));
-type Tab = { id: number; active: boolean; url: string };
-// フォーカス中のウィンドウで表示中のタブ、他のウィンドウで表示中のタブ、バックグラウンドのタブ
-const activeTab: Tab = { id: 1, active: true, url: '' };
-const otherWindowTab: Tab = { id: 2, active: true, url: '' };
-const backgroundTab: Tab = { id: 3, active: false, url: '' };
+type Tab = { id: number; windowId: number; active: boolean; url: string };
+// 最後にフォーカスしたウィンドウ（ID 1）で表示中のタブ、他のウィンドウで表示中のタブ、バックグラウンドのタブ
+const activeTab: Tab = { id: 1, windowId: 1, active: true, url: '' };
+const otherWindowTab: Tab = { id: 2, windowId: 2, active: true, url: '' };
+const backgroundTab: Tab = { id: 3, windowId: 1, active: false, url: '' };
 const openTab = (url: string) => {
   activeTab.url = url;
 };
-// ポップアップを開いた直後など、どのウィンドウにもフォーカスがなく、表示中のタブを照会しても返らない状態
-let noWindowFocused = false;
+// 停止していた service worker をポップアップを開いて起動したときなど、現在のウィンドウを指定した照会が空になる状態
+let currentWindowUnknown = false;
 // マニフェストの既定は有効。タブごとの設定がなければ既定値で表示される
 const iconEnabled = (tabId: number) =>
   mocks.action.get(tabId) ?? mocks.action.get(undefined) ?? true;
@@ -120,15 +124,19 @@ beforeEach(() => {
   activeTab.url = '';
   otherWindowTab.url = 'https://kabutan.jp/stock/?code=7203';
   backgroundTab.url = 'https://example.com/';
-  noWindowFocused = false;
-  browser.tabs.query.mockImplementation(async ({ active }: { active?: boolean }) =>
-    (active
-      ? noWindowFocused
-        ? []
-        : [activeTab]
-      : [activeTab, otherWindowTab, backgroundTab]
-    ).map((tab) => ({ ...tab })),
-  );
+  currentWindowUnknown = false;
+  browser.windows.getLastFocused.mockResolvedValue({ id: activeTab.windowId, focused: true });
+  type Query = { active?: boolean; windowId?: number; currentWindow?: boolean };
+  browser.tabs.query.mockImplementation(async ({ active, windowId, currentWindow }: Query) => {
+    if (currentWindow && currentWindowUnknown) {
+      return [];
+    }
+    const inWindow = currentWindow ? activeTab.windowId : windowId;
+    return [activeTab, otherWindowTab, backgroundTab]
+      .filter((tab) => active === undefined || tab.active === active)
+      .filter((tab) => inWindow === undefined || tab.windowId === inWindow)
+      .map((tab) => ({ ...tab }));
+  });
 });
 
 it('ignores stale responses after changing companies, and distinguishes error and empty', async () => {
@@ -222,22 +230,38 @@ it('retries a failed page when its tab loads again or changes its URL, not on ot
   expect(restarted.store.getState().financialStatement.status).toBe('success');
 });
 
-it('keeps the page and does not retry it while no window has focus', async () => {
+it('follows the shown tab even when the current window cannot be queried', async () => {
+  load.mockResolvedValue([report]);
+  openTab('https://kabutan.jp/stock/?code=7203');
+  await startServiceWorker();
+
+  // 停止していた service worker をポップアップを開いて起動し、開いたままページが別の銘柄へ移る
+  currentWindowUnknown = true;
+  const restarted = await startServiceWorker();
+  openTab('https://kabutan.jp/stock/?code=6758');
+  await restarted.updateTab({ status: 'loading', url: activeTab.url });
+  expect(load).toHaveBeenCalledTimes(2);
+  expect(restarted.store.getState().sitePage.stockCode).toBe('6758');
+  expect(restarted.store.getState().financialStatement).toEqual({
+    status: 'success',
+    results: [report],
+  });
+});
+
+it('keeps the page when no window is found, and does not retry it while no window has focus', async () => {
   load.mockResolvedValue([report]);
   openTab('https://kabutan.jp/stock/?code=7203');
   const first = await startServiceWorker();
   const shown = first.store.getState();
   expect(shown.financialStatement.status).toBe('success');
 
-  // ポップアップを開いて停止していた service worker が起動したとき、どのウィンドウにもフォーカスがない通知が届くことがある
-  noWindowFocused = true;
+  browser.windows.getLastFocused.mockRejectedValue(new Error('No last-focused window'));
   const restarted = await startServiceWorker();
-  await restarted.focusWindow(browser.windows.WINDOW_ID_NONE);
   expect(restarted.store.getState()).toEqual(shown);
 
-  // 失敗した取得も、フォーカスが外れただけではやり直さない
+  // 失敗した取得も、Chrome のウィンドウからフォーカスが外れただけではやり直さない
+  browser.windows.getLastFocused.mockResolvedValue({ id: activeTab.windowId, focused: false });
   restarted.store.dispatch(setStatus('error'));
-  noWindowFocused = false;
   await restarted.focusWindow(browser.windows.WINDOW_ID_NONE);
   expect(load).toHaveBeenCalledTimes(1);
   await restarted.focusWindow();

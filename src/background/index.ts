@@ -60,15 +60,26 @@ const clearPage = () => {
 // タブの照会は直後の通知で打ち切られることがあるため、条件は最後まで照会を終えたときにまとめて使う
 const retryConditions: ((activeTabId?: number) => boolean)[] = [];
 
+// service worker には現在のウィンドウがなく、currentWindow を指定した照会は空になることがある
+// （停止していた service worker をポップアップを開いて起動したときなど）。最後にフォーカスしたウィンドウを指定して照会する
+const queryShownTab = async () => {
+  const { id: windowId } = await browser.windows.getLastFocused();
+  if (windowId === undefined) {
+    return undefined;
+  }
+  const [tab] = await browser.tabs.query({ active: true, windowId });
+  return tab as Tabs.Tab | undefined;
+};
+
 const changeStateByActivatedTag = async () => {
   const requestId = ++requestSequence;
-  const activeTabs = await browser.tabs.query({ active: true, currentWindow: true });
-  // 表示中のタブを照会できないとき（どのウィンドウにもフォーカスがないときなど）は、表示を変えない
-  if (requestId !== requestSequence || activeTabs.length === 0) {
+  const shownTab = await queryShownTab().catch(() => undefined);
+  // 表示中のタブを特定できないとき（ウィンドウがないときなど）は、表示を変えない
+  if (requestId !== requestSequence || shownTab === undefined) {
     return;
   }
-  const retryOnError = retryConditions.splice(0).some((allows) => allows(activeTabs[0].id));
-  const page = stockPageOf(activeTabs[0].url);
+  const retryOnError = retryConditions.splice(0).some((allows) => allows(shownTab.id));
+  const page = stockPageOf(shownTab.url);
   if (page === undefined) {
     clearPage();
     return;

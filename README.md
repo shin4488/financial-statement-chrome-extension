@@ -4,20 +4,18 @@
 
 データは [investee.info](https://investee.info) の GraphQL API から取得し、見やすいグラフとして描画します。
 
----
-
-## 主な対応サイト
+## 対応サイト
 
 以下のサイトで銘柄ページを開くと拡張アイコンがアクティブになり、ポップアップで財務三表を確認できます。
 
-- **株探** (`kabutan.jp`)
-- **みんかぶ** (`minkabu.jp`)
-- **Yahoo!ファイナンス** (`finance.yahoo.co.jp`)
-- **四季報オンライン** (`shikiho.toyokeizai.net`)
-- **バフェット・コード** (`buffett-code.com`)
-- **楽天証券** (`rakuten-sec.co.jp`)
-
----
+| サイト             | ドメイン                                            |
+| ------------------ | --------------------------------------------------- |
+| 株探               | `kabutan.jp`                                        |
+| みんかぶ           | `minkabu.jp`                                        |
+| Yahoo!ファイナンス | `finance.yahoo.co.jp`                               |
+| 四季報オンライン   | `shikiho.toyokeizai.net`                            |
+| バフェット・コード | `www.buffett-code.com`                              |
+| 楽天証券           | `www.rakuten-sec.co.jp`、`member.rakuten-sec.co.jp` |
 
 ## 仕組み
 
@@ -29,17 +27,15 @@ flowchart LR
     Ext --> Pop["ポップアップ UI<br>(MUI + recharts でグラフ描画)"]
 ```
 
----
-
 ## 技術スタック
 
-- **フレームワーク / 言語**: React, TypeScript
-- **状態管理 / 通信**: Redux Toolkit, Apollo Client (GraphQL)
-- **UI / チャート**: Material-UI, recharts
-- **ビルドツール**: Vite, CRXJS (@crxjs/vite-plugin)
-- **仕様**: Manifest V3 (Chrome) / Manifest V2 (Firefox)
-
----
+| 用途                 | 使用するもの                                |
+| -------------------- | ------------------------------------------- |
+| フレームワーク・言語 | React、TypeScript                           |
+| 状態管理・通信       | Redux Toolkit、Apollo Client (GraphQL)      |
+| UI・チャート         | MUI、recharts                               |
+| ビルド               | Vite、CRXJS (@crxjs/vite-plugin)            |
+| 拡張機能の仕様       | Manifest V3 (Chrome)、Manifest V2 (Firefox) |
 
 ## 開発環境と動作確認
 
@@ -87,8 +83,6 @@ yarn preview:popup
 
 変更前のソースを別ディレクトリに用意した場合は、`POPUP_PREVIEW_SOURCE=/path/to/before/src yarn preview:popup --port 8304` で同じ確認データによる比較もできます。
 
----
-
 ## 主なコマンド
 
 ```bash
@@ -99,8 +93,6 @@ yarn lint      # oxlint・Prettier・型チェックによる静的検証
 yarn compile   # GraphQL スキーマから TypeScript 型を再生成
 ```
 
----
-
 ## ディレクトリ構成
 
 ```text
@@ -108,10 +100,14 @@ financial-statement-chrome-extension/
 ├── src/
 │   ├── background/          # 銘柄ページ検知、銘柄コード抽出、API通信
 │   ├── popup/               # ポップアップの画面レイアウト、カルーセル表示
-│   ├── shared/              # Web版と共有する財務グラフ描画コンポーネント
-│   └── store/               # Redux store 定義
-├── manifest.json            # 拡張機能のマニフェスト定義 (MV3)
-└── vite.config.ts           # ビルド設定
+│   ├── shared/              # Web版と共有する財務グラフ・指標の表示コンポーネント
+│   ├── store/               # Redux store 定義、background とポップアップの間の状態の受け渡し
+│   └── manifest.mts         # 拡張機能のマニフェスト定義 (MV3)
+├── tools/
+│   ├── popup-preview/       # 複数データでのポップアップ表示確認（yarn preview:popup）
+│   └── unstable_mv3ToMv2Build.mjs  # Firefox 用の MV2 への変換（yarn build で実行）
+├── docs/                    # 計測ガイド、リリース手順
+└── vite.config.mts          # ビルド設定
 ```
 
 ## 利用状況の分析

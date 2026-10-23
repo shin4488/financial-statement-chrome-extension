@@ -22,11 +22,10 @@ const manifest = defineManifest(async (env) => ({
   background: {
     service_worker: 'background/index.ts',
   },
-  // 表示中のページ情報取得・表示中のページに対にする処理
+  // 表示中のページ情報取得・表示中のページに対する処理
   content_scripts: [],
-  // CORSエラー回避のためにこの拡張機能からアクセス可能なホスト
-  // （本番APIはCORSヘッダを返さないため、拡張からのfetchはhost_permissionsのCORS免除が頼り。
-  //   パスまで含めた '/*' でないと /api/graphql がマッチしない）
+  // 本番APIはCORSヘッダを返さないため、拡張からのfetchはhost_permissionsによるCORSの免除で通す。
+  // パスまで含めた '/*' でないと /api/graphql がマッチしない。
   // 開発ビルドはローカルdockerのバックエンド（financial-statementリポジトリ）も許可する
   host_permissions:
     env.mode === 'development'
@@ -51,6 +50,7 @@ const manifest = defineManifest(async (env) => ({
   },
   // この拡張機能が使えるリソース
   // storage: service worker が停止しても表示中のページの状態を残すため（storage.session）
+  // tabs: 対応サイトのタブの URL から銘柄ページかを判定するため（host_permissions にないサイトの URL は、tabs がないと読めない）
   permissions: ['storage', 'tabs'],
 }));
 

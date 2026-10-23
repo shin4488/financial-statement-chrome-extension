@@ -113,4 +113,4 @@ gh release view <version>
 
 ### 4. 後片付け（任意・エージェントに依頼可）
 
-- 新クエリの本番デプロイが完了していれば、`codegen.ts` の schema 参照をローカル docker から本番（`https://investee.info/api/graphql`）へ戻す PR を検討する（ローカル docker 必須の制約を外せる。詳細は [README.md](../README.md) の codegen 節）
+- バックエンドの変更を先行開発するために `codegen.ts` の schema をローカル docker へ切り替えていた場合は、新クエリの本番デプロイ後に本番（`https://investee.info/api/graphql`）へ戻す PR を作る（規約は [AGENTS.md](../AGENTS.md) の「重要な規約」）

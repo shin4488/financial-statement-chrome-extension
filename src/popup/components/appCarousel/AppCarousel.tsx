@@ -118,8 +118,7 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
     const animation = `${duration}ms ease-in-out`;
     return (
       <Box position="relative" overflow="hidden">
-        {/* 全スライドを同じセルに重ね、高さを最も高いスライドに揃える。表示中のスライドの高さに合わせると、
-            切替のたびに下端のナビボタンが上下に動き、出ていくスライドがナビ行に重なる */}
+        {/* 全スライドを同じセルに重ね、高さを最も高いスライドに揃える。表示中のスライドの高さに合わせると、切替のたびに下端のナビボタンが上下に動き、出ていくスライドがナビ行に重なる */}
         <Box display="grid" gridTemplateColumns="minmax(0, 1fr)">
           {React.Children.map(this.props.children, (child, index) => {
             const leaving = index === previous;

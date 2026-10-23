@@ -80,8 +80,7 @@ export const connectStore = () =>
         }
         store.dispatch(replaceState(message as RootState));
       });
-      // 停止した service worker からは切断される。表示中の状態は保ち、service worker の起動の知らせか
-      // 次の dispatch で接続し直す（dispatch の場合は接続で service worker を起動させる）
+      // 停止した service worker からは切断される。表示中の状態は保ち、service worker の起動の知らせか次の dispatch で接続し直す（dispatch の場合は接続で service worker を起動させる）
       port.onDisconnect.addListener(() => {
         if (connection === port) {
           connection = undefined;

@@ -21,7 +21,7 @@ export default defineConfig((config) => {
         port: 5173,
       },
       // https://github.com/vitejs/vite/discussions/3396#discussioncomment-10371388
-      // vite --hostで起動する
+      // Dockerコンテナ内で起動しても、ホストのブラウザから接続できるよう、すべてのアドレスで待ち受ける（vite --host と同じ）
       host: true,
     },
     // prevent src/ prefix on extension urls

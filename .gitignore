@@ -27,6 +27,6 @@ dist-firefox-v2
 # Chrome Web Store 申請用 zip の出力先（/release スキルが生成する）
 /release/
 
-# Claude Code（.claude/skills/ はコミット対象、個人設定とworktreeは除外）
+# Claude Code の個人設定と worktree
 .claude/settings.local.json
 .claude/worktrees/

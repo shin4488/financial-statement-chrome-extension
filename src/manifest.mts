@@ -24,8 +24,6 @@ const manifest = defineManifest(async (env) => ({
   },
   // 表示中のページ情報取得・表示中のページに対にする処理
   content_scripts: [],
-  // 拡張機能右クリック時のオプションに関する表示
-  // options_ui: {},
   // CORSエラー回避のためにこの拡張機能からアクセス可能なホスト
   // （本番APIはCORSヘッダを返さないため、拡張からのfetchはhost_permissionsのCORS免除が頼り。
   //   パスまで含めた '/*' でないと /api/graphql がマッチしない）

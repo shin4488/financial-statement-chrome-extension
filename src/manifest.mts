@@ -31,7 +31,6 @@ const manifest = defineManifest(async (env) => ({
     env.mode === 'development'
       ? ['https://investee.info/*', 'http://localhost:20000/*']
       : ['https://investee.info/*'],
-  web_accessible_resources: [],
   // 画面上でこの拡張機能が持つ機能
   action: {
     default_popup: 'popup/popup.html',

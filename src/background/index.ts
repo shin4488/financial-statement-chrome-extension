@@ -59,8 +59,8 @@ const clearPage = () => {
 // タブの照会は直後の通知で打ち切られることがあるため、条件は最後まで照会を終えたときにまとめて使う
 const retryConditions: ((activeTabId?: number) => boolean)[] = [];
 
-// service worker には現在のウィンドウがなく、currentWindow を指定した照会は空になることがある
-// （停止していた service worker をポップアップを開いて起動したときなど）。最後にフォーカスしたウィンドウを指定して照会する
+// service worker には現在のウィンドウがなく、currentWindow を指定した照会は空になることがある（停止していた service worker をポップアップを開いて起動したときなど）。
+// 最後にフォーカスしたウィンドウを指定して照会する
 const queryShownTab = async () => {
   const { id: windowId } = await browser.windows.getLastFocused();
   if (windowId === undefined) {
@@ -131,8 +131,7 @@ const onPageChanged = (retryOnError?: (activeTabId?: number) => boolean) => {
   return latestCheck;
 };
 // 失敗した取得は、ポップアップが接続したとき、タブ・ウィンドウを切り替えたとき、表示中のタブの URL が変わったときにやり直す。
-// 読み込み開始の通知（status: 'loading'）は iframe の読み込みでも届き、同じ URL での読み込み直しと区別できないため、条件にしない
-// （読み込み直したページは、ポップアップを開いたときにやり直す）。
+// 読み込み開始の通知（status: 'loading'）は iframe の読み込みでも届き、同じ URL での読み込み直しと区別できないため、条件にしない（読み込み直したページは、ポップアップを開いたときにやり直す）。
 // 他のタブの更新やタイトルの変更などでは、表示中のページを確かめるだけで API は呼び直さない。
 // ポップアップへは確認を終えてから状態を送らせ、やり直す前の失敗を表示させない
 exposeStore(store, { ready: restored, onConnect: () => onPageChanged(() => true) });

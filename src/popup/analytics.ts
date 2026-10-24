@@ -16,7 +16,7 @@ const sessionKey = 'investeeExtensionAnalyticsSession';
 const sessionTimeout = 30 * 60 * 1000;
 let previousEventTime = performance.now();
 
-// 計測はポップアップ内の操作だけ。タブの移動履歴や銘柄・URL・企業名は送らない。
+// 計測するのは、ポップアップを開いたこと・表示結果・ポップアップ内の操作だけ。タブの移動履歴や銘柄・URL・企業名は送らない。
 export function trackEvent(name: EventName, params: EventParams = {}): void {
   if (!ANALYTICS_ENABLED) {
     return;
@@ -25,6 +25,7 @@ export function trackEvent(name: EventName, params: EventParams = {}): void {
     if (localStorage.getItem('investeeExtensionAnalyticsEnabled') === 'false') {
       return;
     }
+    // 中継API（investee.info）は、client_id（UUID v4）・session_id・engagement_time_msec・site_domain_name（対応サイトのドメイン）のどれかが形式や範囲から外れたイベントを受け付けない。送信前に値を同じ条件に合わせる
     let clientId = localStorage.getItem(clientKey);
     if (
       !clientId ||

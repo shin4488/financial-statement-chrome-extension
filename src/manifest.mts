@@ -7,8 +7,7 @@ const { version } = packageJson;
 // 依存が対応するブラウザの下限のうち、最も新しいものに合わせる
 export const minimumChromeVersion = 111;
 
-// NOTE: do not include src/ in paths,
-// vite root folder: src, public folder: public (based on the project root)
+// NOTE: Paths are relative to the Vite root (src/) or the public directory (public/), so do not prefix them with src/.
 // @see ../vite.config.mts
 
 const manifest = defineManifest(async (env) => ({
@@ -22,19 +21,14 @@ const manifest = defineManifest(async (env) => ({
   background: {
     service_worker: 'background/index.ts',
   },
-  // 表示中のページ情報取得・表示中のページに対にする処理
   content_scripts: [],
-  // 拡張機能右クリック時のオプションに関する表示
-  // options_ui: {},
-  // CORSエラー回避のためにこの拡張機能からアクセス可能なホスト
-  // （本番APIはCORSヘッダを返さないため、拡張からのfetchはhost_permissionsのCORS免除が頼り。
-  //   パスまで含めた '/*' でないと /api/graphql がマッチしない）
+  // 本番APIはCORSヘッダを返さないため、拡張からのfetchはhost_permissionsによるCORSの免除で通す。
+  // パスまで含めた '/*' でないと /api/graphql がマッチしない。
   // 開発ビルドはローカルdockerのバックエンド（financial-statementリポジトリ）も許可する
   host_permissions:
     env.mode === 'development'
       ? ['https://investee.info/*', 'http://localhost:20000/*']
       : ['https://investee.info/*'],
-  web_accessible_resources: [],
   // 画面上でこの拡張機能が持つ機能
   action: {
     default_popup: 'popup/popup.html',
@@ -53,6 +47,7 @@ const manifest = defineManifest(async (env) => ({
   },
   // この拡張機能が使えるリソース
   // storage: service worker が停止しても表示中のページの状態を残すため（storage.session）
+  // tabs: 各タブの URL から対応サイトの銘柄ページかを判定するため（host_permissions にないサイトのタブの URL は、tabs がないと読めない）
   permissions: ['storage', 'tabs'],
 }));
 

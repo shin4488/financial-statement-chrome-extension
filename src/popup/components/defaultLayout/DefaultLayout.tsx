@@ -15,7 +15,6 @@ import {
 import Grid from '@mui/material/Grid2';
 import { RootState } from '@/store/store';
 
-// storeにアクセスするための設定
 const mapStateToProps = (state: RootState) => ({
   stockCode: state.sitePage.stockCode,
 });
@@ -27,7 +26,6 @@ class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
   };
 
   render(): React.ReactNode {
-    // 複数ページ共通で使用したい内容があればこのコンポーネントに記述する。
     // 出典はスクロールする領域の外に置き、窓の下端に常に表示する（重ねると最後の行や操作ボタンを隠す）
     return (
       <Box display="flex" flexDirection="column" height="100%">

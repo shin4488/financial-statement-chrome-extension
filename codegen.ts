@@ -1,7 +1,7 @@
 import { CodegenConfig } from '@graphql-codegen/cli';
 
 const config: CodegenConfig = {
-  // 公開済み拡張が実際に会話する本番APIのschemaを正とする（未デプロイの変更が型に混ざるのを防ぐ）。
+  // 公開済み拡張が接続する本番APIのschemaを正とする（未デプロイの変更が型に混ざるのを防ぐ）。
   // 生成物は src/__generated__/ にコミットするため、build/CIでは再生成不要
   schema: 'https://investee.info/api/graphql',
   documents: ['./**/*.graphql'],

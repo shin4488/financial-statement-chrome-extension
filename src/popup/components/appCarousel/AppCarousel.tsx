@@ -14,6 +14,7 @@ const NavigateNext = createSvgIcon(
 );
 const Dot = createSvgIcon(<circle cx="12" cy="12" r="8" />, 'FiberManualRecord');
 
+// 計測で送るグラフの種類。添字で FinancialStatementList が渡すスライドと対応付けるため、スライドの順と同じ並びにする
 const chartTypes: EventParams['chart_type'][] = ['bs', 'pl', 'cf', 'fcf', 'indicators'];
 const interval = 5000;
 const duration = 100;
@@ -118,8 +119,7 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
     const animation = `${duration}ms ease-in-out`;
     return (
       <Box position="relative" overflow="hidden">
-        {/* 全スライドを同じセルに重ね、高さを最も高いスライドに揃える。表示中のスライドの高さに合わせると、
-            切替のたびに下端のナビボタンが上下に動き、出ていくスライドがナビ行に重なる */}
+        {/* 全スライドを同じセルに重ね、高さを最も高いスライドに揃える。表示中のスライドの高さに合わせると、切替のたびに下端のナビボタンが上下に動き、出ていくスライドがナビ行に重なる */}
         <Box display="grid" gridTemplateColumns="minmax(0, 1fr)">
           {React.Children.map(this.props.children, (child, index) => {
             const leaving = index === previous;

@@ -16,8 +16,7 @@ const validSiteClassHash = {
 };
 
 export const getValidSiteInstance = (urlHostName: string) => {
-  // hasOwnPropertyで引く: in演算子だとホスト名が"constructor"等のとき
-  // Object.prototypeのメンバーが対応サイトクラス扱いになるため
+  // hasOwnPropertyで引く: in演算子だとホスト名が"constructor"等のときObject.prototypeのメンバーが対応サイトクラス扱いになるため
   if (!Object.prototype.hasOwnProperty.call(validSiteClassHash, urlHostName)) {
     return;
   }

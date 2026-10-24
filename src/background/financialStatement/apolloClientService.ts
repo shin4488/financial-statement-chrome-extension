@@ -18,7 +18,7 @@ export default class ApolloClientService {
   create(): ApolloClient {
     return new ApolloClient({
       link: new HttpLink({
-        // 開発ビルドは、本番へデプロイする前のバックエンドの変更と合わせて確かめられるよう、ローカルdockerのバックエンド（financial-statementリポジトリ）に接続する
+        // 開発ビルドは、本番へデプロイしていないバックエンドの変更を使って拡張の動作を確かめられるよう、ローカルdockerのバックエンド（financial-statementリポジトリ）に接続する
         uri:
           import.meta.env.MODE === 'development'
             ? apiEndpoints.development

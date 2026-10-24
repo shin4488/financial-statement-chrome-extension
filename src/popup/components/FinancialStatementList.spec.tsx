@@ -129,10 +129,9 @@ it('自動切替で指標にも進み、OFFにすると停止する', () => {
   expect(screen.getByLabelText('ROE：10.0%')).toBeVisible();
 });
 
-it('旧キャッシュの指標欠損でも開けて、再取得した企業公表ROEに更新される', () => {
+it('指標を持たない結果でも開けて、再取得した企業公表ROEに更新される', () => {
   const { financialIndicators: omitted, ...legacy } = report;
   expect(omitted).toBeDefined();
-  // 更新前に永続化されたJSONは新しい必須フィールドを持たない。
   const { store } = setup([legacy as FinancialStatementResult]);
   fireEvent.click(screen.getByRole('button', { name: 'carousel indicator 5' }));
   settle();

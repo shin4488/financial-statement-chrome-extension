@@ -484,12 +484,12 @@ export const unavailableReport: FinancialStatementResult = {
 };
 
 const { financialIndicators: omitted, ...legacy } = healthyReport;
-// 更新前に保存されたキャッシュだけは、現在のスキーマに必須の指標を持たない。
+// 指標を持たないデータでも、共有コンポーネントが「データなし」で表示することを確かめる。
 void omitted;
 export const legacyReport = {
   ...legacy,
   id: 'preview-legacy',
-  companyName: '表示確認用・旧キャッシュ株式会社',
+  companyName: '表示確認用・指標なし株式会社',
 } as FinancialStatementResult;
 
 export const allReports = [
@@ -548,8 +548,8 @@ export const scenarios: PreviewScenario[] = [
   },
   {
     id: 'legacy',
-    name: '旧キャッシュ・指標なし',
-    description: '過去に保存された、financialIndicatorsを持たないデータ。',
+    name: '指標なし',
+    description: 'financialIndicatorsを持たないデータ。',
     reports: [legacyReport],
     status: 'success',
   },

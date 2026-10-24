@@ -14,6 +14,7 @@ const NavigateNext = createSvgIcon(
 );
 const Dot = createSvgIcon(<circle cx="12" cy="12" r="8" />, 'FiberManualRecord');
 
+// 計測で送るグラフの種類。添字で FinancialStatementList が渡すスライドと対応付けるため、スライドの順と同じ並びにする
 const chartTypes: EventParams['chart_type'][] = ['bs', 'pl', 'cf', 'fcf', 'indicators'];
 const interval = 5000;
 const duration = 100;

@@ -124,7 +124,7 @@ describe('表示確認データの会計・API契約', () => {
     expect(healthyReport.cashFlow.steps[1].amount).toBe(150_000_000);
   });
 
-  it('複数年度・企業・旧キャッシュ・空・読込中・失敗を選べる', () => {
+  it('複数年度・企業・指標なし・空・読込中・失敗を選べる', () => {
     expect(scenarios.find((item) => item.id === 'normal')?.reports).toHaveLength(2);
     expect(new Set(allReports.map((report) => report.id)).size).toBe(allReports.length);
     expect(new Set(allReports.map((report) => report.companyName)).size).toBeGreaterThan(1);

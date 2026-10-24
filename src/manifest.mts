@@ -7,8 +7,7 @@ const { version } = packageJson;
 // 依存が対応するブラウザの下限のうち、最も新しいものに合わせる
 export const minimumChromeVersion = 111;
 
-// NOTE: do not include src/ in paths,
-// vite root folder: src, public folder: public (based on the project root)
+// NOTE: Paths are relative to the Vite root (src/) or the public directory (public/), so do not prefix them with src/.
 // @see ../vite.config.mts
 
 const manifest = defineManifest(async (env) => ({
@@ -22,7 +21,6 @@ const manifest = defineManifest(async (env) => ({
   background: {
     service_worker: 'background/index.ts',
   },
-  // 表示中のページ情報取得・表示中のページに対する処理
   content_scripts: [],
   // 本番APIはCORSヘッダを返さないため、拡張からのfetchはhost_permissionsによるCORSの免除で通す。
   // パスまで含めた '/*' でないと /api/graphql がマッチしない。
@@ -49,7 +47,7 @@ const manifest = defineManifest(async (env) => ({
   },
   // この拡張機能が使えるリソース
   // storage: service worker が停止しても表示中のページの状態を残すため（storage.session）
-  // tabs: 対応サイトのタブの URL から銘柄ページかを判定するため（host_permissions にないサイトの URL は、tabs がないと読めない）
+  // tabs: 各タブの URL から対応サイトの銘柄ページかを判定するため（host_permissions にないサイトのタブの URL は、tabs がないと読めない）
   permissions: ['storage', 'tabs'],
 }));
 

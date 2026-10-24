@@ -156,6 +156,50 @@ it('旧キャッシュの指標欠損でも開けて、再取得した企業公�
   expect(within(screen.getByRole('group', { name: 'ROA' })).getByText('データなし')).toBeVisible();
 });
 
+it('枠の幅に合わせて描くグラフ（BS・フリーCF）にも幅が渡り、SVGが描かれる', () => {
+  // ResponsiveContainerは枠の大きさを測ってからグラフに渡す。jsdomは計測しないため、実ポップアップの大きさを与える
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+    x: 0,
+    y: 0,
+    top: 0,
+    left: 0,
+    right: 384,
+    bottom: 400,
+    width: 384,
+    height: 400,
+    toJSON: () => ({}),
+  });
+  const segment = (key: string, colorRole: string) => ({
+    key,
+    label: key,
+    amount: 100,
+    signedAmount: 100,
+    ratio: 100,
+    colorRole,
+    tooltipLabel: null,
+  });
+  setup([
+    {
+      ...report,
+      balanceSheet: {
+        renderable: true,
+        note: null,
+        bars: [
+          { label: '資産', segments: [segment('流動資産', 'asset1')] },
+          { label: '負債・純資産', segments: [segment('純資産', 'equity')] },
+        ],
+      },
+    },
+  ]);
+  for (let i = 0; i < 3; i += 1) {
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    settle();
+  }
+  const charts = document.querySelectorAll('.recharts-responsive-container');
+  expect(charts).toHaveLength(2);
+  charts.forEach((chart) => expect(chart.querySelector('svg.recharts-surface')).not.toBeNull());
+});
+
 it('年度ごとのカードに対応する値を表示し、空の取得結果でも落ちない', () => {
   const { store } = setup([
     report,

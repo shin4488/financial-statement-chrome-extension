@@ -295,8 +295,8 @@ export function FreeCashFlowChart({ trend }: { trend: FreeCashFlowTrend }) {
                         point.amount == null
                           ? 'transparent'
                           : point.amount < 0
-                          ? colorByRole.cashDecrease
-                          : colorByRole.cashIncrease
+                            ? colorByRole.cashDecrease
+                            : colorByRole.cashIncrease
                       }
                     />
                   ))}

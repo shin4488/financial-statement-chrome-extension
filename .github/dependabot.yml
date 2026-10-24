@@ -21,6 +21,16 @@ updates:
       # src/shared/ はコピー元の Web 側と同じ実装を使うため、MUI のメジャー更新はコピー元と合わせて行う
       - dependency-name: '@mui/material'
         update-types: ['version-update:semver-major']
+      # src/shared/ のチャートが使う recharts 2 は React 19 の要素を判定できず、ResponsiveContainer のグラフを描かない。
+      # React のメジャー更新は、コピー元と合わせて recharts を上げてから行う
+      - dependency-name: 'react'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react-dom'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@types/react'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@types/react-dom'
+        update-types: ['version-update:semver-major']
 
   - package-ecosystem: docker
     directory: /

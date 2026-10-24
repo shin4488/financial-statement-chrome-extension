@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { configureStore } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
 import FinancialStatementList from './FinancialStatementList';
@@ -127,32 +127,6 @@ it('自動切替で指標にも進み、OFFにすると停止する', () => {
     vi.advanceTimersByTime(10000);
   });
   expect(screen.getByLabelText('ROE：10.0%')).toBeVisible();
-});
-
-it('指標を持たない結果でも開けて、再取得した企業公表ROEに更新される', () => {
-  const { financialIndicators: omitted, ...legacy } = report;
-  expect(omitted).toBeDefined();
-  const { store } = setup([legacy as FinancialStatementResult]);
-  fireEvent.click(screen.getByRole('button', { name: 'carousel indicator 5' }));
-  settle();
-  expect(screen.getAllByText('データなし')).toHaveLength(7);
-  act(() => {
-    store.dispatch(
-      setResult([
-        {
-          ...report,
-          financialIndicators: {
-            ...report.financialIndicators,
-            roe: { value: 0.372, status: 'AVAILABLE', source: 'DISCLOSED' },
-            roa: { value: null, status: 'MISSING_DATA' },
-          },
-        },
-      ]),
-    );
-  });
-  expect(screen.getByLabelText('ROE：37.2%')).toBeVisible();
-  expect(screen.getByText('企業公表値')).toBeVisible();
-  expect(within(screen.getByRole('group', { name: 'ROA' })).getByText('データなし')).toBeVisible();
 });
 
 it('枠の幅に合わせて描くグラフ（BS・フリーCF）にも幅が渡り、SVGが描かれる', () => {

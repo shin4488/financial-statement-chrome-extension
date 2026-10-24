@@ -4,14 +4,6 @@ import { amber, green, purple } from '@mui/material/colors';
 import type { FinancialIndicatorsData, FinancialMetric } from './types';
 
 type Metric = FinancialMetric;
-const missing: Metric = { status: 'MISSING_DATA', value: null };
-const emptyIndicators: FinancialIndicatorsData = {
-  roe: missing,
-  roa: missing,
-  netProfitMargin: missing,
-  assetTurnover: missing,
-  financialLeverage: missing,
-};
 
 const percent = new Intl.NumberFormat('ja-JP', {
   style: 'percent',
@@ -131,13 +123,7 @@ function Operator({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function FinancialIndicators({
-  indicators,
-}: {
-  indicators?: FinancialIndicatorsData | null;
-}) {
-  // 拡張の永続化済みキャッシュには追加前のレスポンスが残ることがある。
-  const values = indicators ?? emptyIndicators;
+export function FinancialIndicators({ indicators }: { indicators: FinancialIndicatorsData }) {
   return (
     <Stack
       component="section"
@@ -220,10 +206,10 @@ export function FinancialIndicators({
             {key.toUpperCase()}
           </Typography>
           <MetricValue
-            metric={values[key]}
+            metric={indicators[key]}
             label={key.toUpperCase()}
             highlight
-            disclosed={key === 'roe' && values.roe.source === 'DISCLOSED'}
+            disclosed={key === 'roe' && indicators.roe.source === 'DISCLOSED'}
           />
           <Operator>=</Operator>
           {factors.map((factor, index) => (
@@ -239,7 +225,7 @@ export function FinancialIndicators({
                 </Typography>
               ) : (
                 <MetricValue
-                  metric={values[factor.key]}
+                  metric={indicators[factor.key]}
                   label={factor.lines.join('')}
                   unit={factor.unit}
                 />

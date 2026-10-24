@@ -483,15 +483,6 @@ export const unavailableReport: FinancialStatementResult = {
   },
 };
 
-const { financialIndicators: omitted, ...legacy } = healthyReport;
-// 指標を持たないデータでも、共有コンポーネントが「データなし」で表示することを確かめる。
-void omitted;
-export const legacyReport = {
-  ...legacy,
-  id: 'preview-legacy',
-  companyName: '表示確認用・指標なし株式会社',
-} as FinancialStatementResult;
-
 export const allReports = [
   healthyReport,
   priorYearReport,
@@ -499,7 +490,6 @@ export const allReports = [
   ifrsReport,
   zeroReport,
   unavailableReport,
-  legacyReport,
 ];
 
 export interface PreviewScenario {
@@ -547,15 +537,8 @@ export const scenarios: PreviewScenario[] = [
     status: 'success',
   },
   {
-    id: 'legacy',
-    name: '指標なし',
-    description: 'financialIndicatorsを持たないデータ。',
-    reports: [legacyReport],
-    status: 'success',
-  },
-  {
     id: 'all',
-    name: '全固定データ（7件）',
+    name: `全固定データ（${allReports.length}件）`,
     description: '複数企業・複数年度と、上記の境界条件をまとめて表示。',
     reports: allReports,
     status: 'success',

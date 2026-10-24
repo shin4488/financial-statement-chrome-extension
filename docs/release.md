@@ -24,7 +24,7 @@ curl --fail-with-body -sS -X POST https://investee.info/api/graphql \
 
 ### 2. バージョンを更新する
 
-- 機能・画面変更は minor、不具合修正だけなら patch を上げる。版番号を提案してユーザーに確認する。既に承認済みなら再確認不要。
+- 機能・画面変更は minor、不具合修正だけなら patch を上げる。版番号はこの基準で決め、ユーザーへの確認は不要。
 - 変更するのは `package.json` の `version`。manifest にはビルド時に反映される。
 - タグ名・Release 名はバージョン番号そのまま（例: `1.0.2`）。`v` や `release-` は付けない。
 
@@ -59,7 +59,7 @@ version=$(node -p "require('./package.json').version")
 
 - `release/` とビルド成果物はコミットしない。`git status` で確認する。
 - バージョン変更は `package.json` と、更新が必要だった場合の `yarn.lock` をコミットする。メッセージは `change:` で始まる英語 1 行。
-- PR 経由で main へ反映し、マージはユーザーが行う。マージ前にタグを作成しない。
+- PR 経由で main へ反映し、CI が通ったら head SHA を固定してマージする。マージ前にタグを作成しない。
 
 ### 5. PR マージ後にタグ・GitHub Release を作る
 

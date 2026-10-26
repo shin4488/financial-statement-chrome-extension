@@ -4,40 +4,57 @@ import { configureStore } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
 import Popup from './Popup';
 import { trackEvent } from './analytics';
-import FinancialStatementList from './components/FinancialStatementList';
 import financialStatement, { setResult, setStatus } from '@/store/slices/financialStatement';
 import sitePage, { changeSiteDomain, changeStockCode } from '@/store/slices/sitePageSlice';
+import type { FinancialStatementResult } from '@/background/financialStatement/result';
 
 vi.mock('./analytics', () => ({ trackEvent: vi.fn() }));
-vi.mock('./components/defaultLayout/DefaultLayout', () => ({
-  default: ({
-    children,
-    isAutoPlay,
-    onAutoPlayChange,
-  }: {
-    children: React.ReactNode;
-    isAutoPlay: boolean;
-    onAutoPlayChange: (isAutoPlay: boolean) => void;
-  }) => (
-    <>
-      <input
-        type="checkbox"
-        aria-label="自動切替"
-        checked={isAutoPlay}
-        onChange={(event) => onAutoPlayChange(event.target.checked)}
-      />
-      {children}
-    </>
-  ),
-}));
-vi.mock('./components/FinancialStatementList', () => ({ default: vi.fn(() => null) }));
 
 const autoPlayStorageKey = 'investeeExtensionIsStatementAutoPlay';
-const createStore = () => configureStore({ reducer: { financialStatement, sitePage } });
+const metric = { value: 0.1, status: 'AVAILABLE' as const };
+// グラフの代わりに表示不可の文言を出すレポート。どのスライドを表示しているかを文言で確かめる
+const report: FinancialStatementResult = {
+  id: 'report-1',
+  companyName: '検証株式会社',
+  stockCode: '192A',
+  fiscalYearStartDate: '2025-06-01',
+  fiscalYearEndDate: '2026-05-31',
+  consolidationType: 'consolidated',
+  accountingStandard: 'jgaap',
+  balanceSheet: { renderable: false, note: 'BS表示', bars: [] },
+  profitLoss: { renderable: false, note: 'PL表示', bars: [] },
+  cashFlow: { renderable: false, note: 'CF表示', steps: [] },
+  freeCashFlowTrend: { renderable: false, note: 'フリーCF表示', points: [] },
+  financialIndicators: {
+    roe: { ...metric, source: 'CALCULATED' },
+    roa: metric,
+    netProfitMargin: metric,
+    assetTurnover: metric,
+    financialLeverage: metric,
+  },
+};
+const createStore = (reports?: FinancialStatementResult[]) => {
+  const store = configureStore({ reducer: { financialStatement, sitePage } });
+  if (reports !== undefined) {
+    store.dispatch(setResult(reports));
+  }
+  return store;
+};
+const autoPlayCheckbox = () => screen.getByRole('checkbox', { name: '自動切替' });
+// 自動切替の間隔（5秒）より長く待ち、切替のアニメーションも終える
+const waitLongerThanAutoPlayInterval = () => {
+  act(() => {
+    vi.advanceTimersByTime(6000);
+  });
+};
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.useFakeTimers();
   localStorage.clear();
+});
+afterEach(() => {
+  vi.useRealTimers();
 });
 
 it('uses the UI store and counts each settled result once even in StrictMode', () => {
@@ -82,34 +99,36 @@ it.each([
   { saved: 'true', isAutoPlay: true },
   { saved: 'false', isAutoPlay: false },
 ])(
-  'draws autoplay from the saved preference $saved from the first render',
+  'draws autoplay from the saved preference $saved as soon as the popup renders, and the charts follow it',
   ({ saved, isAutoPlay }) => {
     if (saved !== null) {
       localStorage.setItem(autoPlayStorageKey, saved);
     }
     render(
-      <Provider store={createStore()}>
+      <Provider store={createStore([report])}>
         <Popup />
       </Provider>,
     );
-    expect(vi.mocked(FinancialStatementList).mock.calls[0][0]).toEqual({ isAutoPlay });
-    expect(screen.getByRole('checkbox', { name: '自動切替' })).toHaveProperty(
-      'checked',
-      isAutoPlay,
-    );
+    // 描画した直後（非同期に届く値を待たない時点）で、保存した設定を表示している
+    expect(autoPlayCheckbox()).toHaveProperty('checked', isAutoPlay);
+    waitLongerThanAutoPlayInterval();
+    expect(screen.getByText(isAutoPlay ? 'PL表示' : 'BS表示')).toBeVisible();
   },
 );
 
 it('saves the autoplay change and passes it to the charts without the background', () => {
-  const store = createStore();
+  const store = createStore([report]);
+  // ポップアップの store への dispatch は background へ送られる
   const dispatch = vi.spyOn(store, 'dispatch');
   render(
     <Provider store={store}>
       <Popup />
     </Provider>,
   );
-  fireEvent.click(screen.getByRole('checkbox', { name: '自動切替' }));
+  fireEvent.click(autoPlayCheckbox());
   expect(localStorage.getItem(autoPlayStorageKey)).toBe('false');
-  expect(vi.mocked(FinancialStatementList).mock.lastCall?.[0]).toEqual({ isAutoPlay: false });
+  expect(autoPlayCheckbox()).toHaveProperty('checked', false);
+  waitLongerThanAutoPlayInterval();
+  expect(screen.getByText('BS表示')).toBeVisible();
   expect(dispatch).not.toHaveBeenCalled();
 });

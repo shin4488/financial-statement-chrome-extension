@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { configureStore } from '@reduxjs/toolkit';
 import { Provider } from 'react-redux';
 import FinancialStatementList from './FinancialStatementList';
@@ -50,8 +50,8 @@ function setup(reports = [report], autoPlay = false) {
       <FinancialStatementList isAutoPlay={isAutoPlay} />
     </Provider>
   );
-  const { rerender } = render(view(autoPlay));
-  return { store, setAutoPlay: (isAutoPlay: boolean) => rerender(view(isAutoPlay)) };
+  const { container, rerender } = render(view(autoPlay));
+  return { store, container, setAutoPlay: (isAutoPlay: boolean) => rerender(view(isAutoPlay)) };
 }
 
 function settle() {
@@ -129,7 +129,7 @@ it('自動切替で指標にも進み、OFFにすると停止する', () => {
   expect(screen.getByLabelText('ROE：10.0%')).toBeVisible();
 });
 
-it('枠の幅に合わせて描くグラフ（BS・フリーCF）にも幅が渡り、SVGが描かれる', () => {
+it('枠の幅に合わせて描くグラフ（BS・フリーCF）にも幅が渡り、値のラベルまで描かれる', () => {
   // ResponsiveContainerは枠の大きさを測ってからグラフに渡す。jsdomは計測しないため、実ポップアップの大きさを与える
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
     x: 0,
@@ -151,7 +151,7 @@ it('枠の幅に合わせて描くグラフ（BS・フリーCF）にも幅が渡
     colorRole,
     tooltipLabel: null,
   });
-  setup([
+  const { container } = setup([
     {
       ...report,
       balanceSheet: {
@@ -164,13 +164,18 @@ it('枠の幅に合わせて描くグラフ（BS・フリーCF）にも幅が渡
       },
     },
   ]);
+  // BSは科目と比率のラベルを、フリーCFは5年分の金額（百万円）のラベルを、グラフの中に描く
+  expect(container).toHaveTextContent(/流動資産:\s*100%/);
+  expect(container).toHaveTextContent(/純資産:\s*100%/);
   for (let i = 0; i < 3; i += 1) {
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     settle();
   }
-  const charts = document.querySelectorAll('.recharts-responsive-container');
-  expect(charts).toHaveLength(2);
-  charts.forEach((chart) => expect(chart.querySelector('svg.recharts-surface')).not.toBeNull());
+  const freeCashFlow = screen.getByRole('region', {
+    name: /^フリーキャッシュフローの過去5年の推移/,
+  });
+  expect(freeCashFlow).toBeVisible();
+  expect(within(freeCashFlow).getAllByText('12')).toHaveLength(5);
 });
 
 it('年度ごとのカードに対応する値を表示し、空の取得結果でも落ちない', () => {

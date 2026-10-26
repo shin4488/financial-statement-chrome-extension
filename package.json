@@ -1,6 +1,7 @@
 {
   "name": "browser-extension-react-ts-starter",
   "private": true,
+  "license": "UNLICENSED",
   "version": "1.6.5",
   "scripts": {
     "dev": "run-s clean && vite",

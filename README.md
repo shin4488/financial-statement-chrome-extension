@@ -113,3 +113,9 @@ financial-statement-chrome-extension/
 ## 利用状況の分析
 
 イベントの定義・GA4 の見方・計測停止設定は [計測ガイド](docs/analytics.md) を参照してください。
+
+## ライセンス
+
+All rights reserved です。著作権者の書面による許可なく、このリポジトリのコードを利用・複製・改変・再配布することはできません。詳細は [LICENSE](LICENSE) を参照してください。
+
+このリポジトリは [browser-extension-react-typescript-starter](https://github.com/sinanbekar/browser-extension-react-typescript-starter) を元に作成しており、そのテンプレートに由来する部分は MIT License に従います。全文は [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES) を参照してください。

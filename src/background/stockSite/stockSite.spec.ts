@@ -4,36 +4,27 @@ import YahooFinance from './yahooFinance';
 import Shikiho from './shikiho';
 import BuffettCode from './buffettCode';
 import Rakuten from './rakuten';
-import { extractStockCode, stockCodeSegmentAfter } from './stockCode';
 
 const sp = (query: string) => new URLSearchParams(query);
 
-describe('extractStockCode', () => {
+// 4桁の数字、または3桁の数字と英大文字1字（2024年以降の新形式）だけを証券コードとする。
+// 株探は code の値をそのまま証券コードとして読むため、株探の URL で形式を確かめる
+describe('証券コードの形式', () => {
   test.each([
-    ['2168', '2168'],
-    ['391A', '391A'],
-    ['391a', '391A'], // 小文字は正規化する
-    ['998407', ''], // 指数などの6桁は証券コードではない
-    ['391', ''],
-    ['21680', ''],
-    ['ABCD', ''],
-    ['', ''],
-    [undefined, ''],
-    [null, ''],
-  ])('extractStockCode(%p) = %p', (candidate, expected) => {
-    expect(extractStockCode(candidate as string | undefined | null)).toBe(expected);
-  });
-});
-
-describe('stockCodeSegmentAfter', () => {
-  test.each([
-    ['/stock/391A', 'stock', '391A'],
-    ['/stock/2168/dividend', 'stock', '2168'],
-    ['/stock/', 'stock', ''],
-    ['/news/2168', 'stock', ''],
-    ['/', 'stock', ''],
-  ])('%s (prefix=%s) -> %p', (pathname, prefix, expected) => {
-    expect(stockCodeSegmentAfter(pathname, prefix)).toBe(expected);
+    ['code=2168', true, '2168'],
+    ['code=391A', true, '391A'],
+    ['code=391a', true, '391A'], // 小文字は大文字にそろえる
+    ['code=998407', false, ''], // 指数などの6桁は証券コードではない
+    ['code=391', false, ''],
+    ['code=21680', false, ''],
+    ['code=ABCD', false, ''],
+    ['code=', false, ''],
+  ])('/stock/?%s -> valid=%s code=%s', (query, valid, code) => {
+    const site = new Kabutan('/stock/', sp(query));
+    expect(site.isValid()).toBe(valid);
+    if (valid) {
+      expect(site.getStockCode()).toBe(code);
+    }
   });
 });
 

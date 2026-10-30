@@ -63,8 +63,10 @@ function settle() {
 beforeEach(() => {
   vi.useFakeTimers();
   vi.clearAllMocks();
-  // jsdomはレイアウトを計測しないため、実ポップアップのチャート高を与える。
+  // jsdomはレイアウトを計測しないため、実ポップアップのチャートの大きさを与える。グラフは枠の大きさを測ってから描く
   vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(400);
+  vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(384);
+  vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(400);
   Object.defineProperty(globalThis, 'ResizeObserver', {
     configurable: true,
     value: class {
@@ -75,8 +77,13 @@ beforeEach(() => {
   });
 });
 afterEach(() => {
+  // 描く順番待ちの処理を最後まで進め、次のテストに持ち越さない
+  act(() => {
+    vi.runOnlyPendingTimers();
+  });
   vi.useRealTimers();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 it('BS → PL → CF → フリーCF → ROE・ROAの順に切り替わり、前後へ循環する', () => {
@@ -130,19 +137,6 @@ it('自動切替で指標にも進み、OFFにすると停止する', () => {
 });
 
 it('枠の幅に合わせて描くグラフ（BS・フリーCF）にも幅が渡り、値のラベルまで描かれる', () => {
-  // グラフは枠の大きさを測ってから描く。jsdomは計測しないため、実ポップアップの大きさを、測り方（getBoundingClientRect・clientWidth）ごとに与える
-  vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(384);
-  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
-    x: 0,
-    y: 0,
-    top: 0,
-    left: 0,
-    right: 384,
-    bottom: 400,
-    width: 384,
-    height: 400,
-    toJSON: () => ({}),
-  });
   const segment = (key: string, colorRole: string) => ({
     key,
     label: key,
@@ -203,4 +197,80 @@ it('年度ごとのカードに対応する値を表示し、空の取得結果�
   });
   expect(screen.getByText(/データがありません/)).toBeVisible();
   expect(screen.queryByRole('region', { name: 'ROE・ROA' })).toBeNull();
+});
+
+it('見えていない年度のカードは、見えているカードの後に1枚ずつ描き、見えてきたカードは順番を待たずに描く', () => {
+  // 最新年度のカードだけをスクロールする領域に見える位置に置く
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+    this: HTMLElement,
+  ) {
+    const text = this.textContent ?? '';
+    const top = text.includes('- 2026-05-31') && !text.includes('- 2025-05-31') ? 0 : 10000;
+    return {
+      x: 0,
+      y: top,
+      top,
+      left: 0,
+      right: 384,
+      bottom: top + 400,
+      width: 384,
+      height: 400,
+      toJSON: () => ({}),
+    };
+  });
+  // 見えてきたことを、テストから知らせる
+  const observed: { callback: IntersectionObserverCallback; target: Element }[] = [];
+  vi.stubGlobal(
+    'IntersectionObserver',
+    class {
+      constructor(private callback: IntersectionObserverCallback) {}
+      observe(target: Element) {
+        observed.push({ callback: this.callback, target });
+      }
+      unobserve() {}
+      disconnect() {}
+    },
+  );
+  const balanceSheet = {
+    renderable: true,
+    note: null,
+    bars: [
+      {
+        label: '資産',
+        segments: [
+          {
+            key: 'currentAssets',
+            label: '流動資産',
+            amount: 100,
+            signedAmount: 100,
+            ratio: 100,
+            colorRole: 'asset1',
+            tooltipLabel: null,
+          },
+        ],
+      },
+    ],
+  };
+  const { container } = setup([
+    { ...report, balanceSheet },
+    { ...report, id: 'report-2', fiscalYearEndDate: '2025-05-31', balanceSheet },
+    { ...report, id: 'report-3', fiscalYearEndDate: '2024-05-31', balanceSheet },
+  ]);
+  const cards = [...container.querySelectorAll('.MuiCard-root')];
+  const drawn = () => cards.map((card) => (card.textContent ?? '').includes('流動資産'));
+  expect(drawn()).toEqual([true, false, false]);
+
+  act(() => {
+    vi.advanceTimersByTime(0);
+  });
+  expect(drawn()).toEqual([true, true, false]);
+
+  const last = observed.find(({ target }) => target === cards[2]);
+  act(() => {
+    last?.callback(
+      [{ target: cards[2], isIntersecting: true } as IntersectionObserverEntry],
+      {} as IntersectionObserver,
+    );
+  });
+  expect(drawn()).toEqual([true, true, true]);
 });

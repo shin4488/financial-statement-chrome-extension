@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   appfront:
     build: .
@@ -6,8 +5,7 @@ services:
       - 5173:5173
     volumes:
       - .:/home/app/financialStatementChromeExtention
-      # node_modulesはホストと共有しない（Vite/rolldownがOS別のネイティブバイナリを使うため、
-      # コンテナ(Linux)内でinstallした実体を名前付きボリュームに持つ）
+      # node_modulesはホストと共有しない（Vite/rolldownがOS別のネイティブバイナリを使うため、コンテナ(Linux)内でinstallした実体を名前付きボリュームに持つ）
       - extension_node_modules:/home/app/financialStatementChromeExtention/node_modules
 volumes:
   extension_node_modules:

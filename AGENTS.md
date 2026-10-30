@@ -1,6 +1,6 @@
 # financial-statement-chrome-extension
 
-investee（https://investee.info）のブラウザ拡張。株式情報サイトの銘柄ページを開くと、background service worker が GraphQL `financialReports` から財務 3 表チャートを取得し、ポップアップに描画する。
+investee（https://investee.info）のブラウザ拡張。株式情報サイトの銘柄ページを開くと、background service worker が GraphQL `financialReports` から財務 3 表・フリー CF のチャートと ROE・ROA を取得し、ポップアップに描画する。
 
 ## コマンド
 
@@ -15,7 +15,7 @@ investee（https://investee.info）のブラウザ拡張。株式情報サイト
 
 ## アーキテクチャ
 
-`src/background/` がタブ・銘柄を判定して API を取得し、`src/store/bridge.ts` の runtime ポート経由で `src/popup/` に渡す。描画は `src/shared/financialCharts/`。接続先は下記の設定元を確認し、値を重複して管理しない。
+`src/background/` がタブ・銘柄を判定して API を取得し、`src/store/bridge.ts` の runtime ポート経由で `src/popup/` に渡す。描画は `src/shared/financialCharts/`（グラフ）と `src/shared/financialIndicators/`（ROE・ROA）。接続先は下記の設定元を確認し、値を重複して管理しない。
 
 - パスエイリアス `@/` = `src/`。UI コンポーネントはクラスコンポーネントが既存の流儀
 - チャートの科目・色・積み上げ順は API の返却値（colorRole・配列順序）が契約で、フロントで解釈・並べ替えをしない
@@ -25,13 +25,14 @@ investee（https://investee.info）のブラウザ拡張。株式情報サイト
 - **GraphQL クエリは `.graphql` ファイル**（codegen の documents: `**/*.graphql`。gql タグではない）。変更後 `yarn compile`。生成物 `src/__generated__/` はコミットする
 - codegen の schema は本番 introspection（`https://investee.info/api/graphql`）を参照。バックエンドの変更を先行開発するときだけ一時的にローカル docker（`http://localhost:20000/graphql`）へ切り替える。`Money` スカラは `number`
 - **`src/shared/financialCharts/` と `src/shared/financialIndicators/` は直接編集禁止**。コピー元は financial-statement `application/frontend/src/shared/` の同名ディレクトリ。同期はディレクトリごとコピーする（ドリフト確認はコピー元との diff）。`colorRoles.ts` はバックエンド enum との契約で、BE / Web フロント / 拡張の 3 点同時変更
+- 対応する最も古い Chrome は `src/manifest.mts` の `minimumChromeVersion` で決め、manifest の `minimum_chrome_version` とビルドの target に使う。依存を更新したら対応ブラウザの下限を確かめ、これより新しければ上げる
 - 接続先切替は `import.meta.env.MODE`（`src/background/financialStatement/apolloClientService.ts`）と `env.mode`（`src/manifest.mts`）。本番 API は CORS ヘッダを返さないため host_permissions の CORS 免除で fetch している。パターンは `https://investee.info/*`（パス `/*` 必須）
 - コミットメッセージは `add:` / `change:` プレフィックスの英語 1 行（`git log` 参照）
 
 ## 関連リポジトリ・ローカル環境
 
 - financial-statement（通常 `../financial-statement`）: monorepo（`application/backend` = Rails、`application/frontend` = React）。`docker compose up` で API が `localhost:20000`、GraphiQL は `http://localhost:20000/graphiql`
-- 設計ドキュメントは financial-statement の `docs/guide/`（README.md が目次。チャート契約は `03_data_flow.md`・`04_system.md` の関連節）
+- 設計ドキュメントは financial-statement の `docs/guide/`（README.md が目次。チャート契約は `02_data_flow.md` の「チャート組み立て」「GraphQL API」「描画」の節）
 
 ## リリースの順序制約
 

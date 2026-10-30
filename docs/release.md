@@ -24,7 +24,7 @@ curl --fail-with-body -sS -X POST https://investee.info/api/graphql \
 
 ### 2. バージョンを更新する
 
-- 機能・画面変更は minor、不具合修正だけなら patch を上げる。版番号を提案してユーザーに確認する。既に承認済みなら再確認不要。
+- 機能・画面変更は minor、不具合修正だけなら patch を上げる。版番号はこの基準で決め、ユーザーへの確認は不要。
 - 変更するのは `package.json` の `version`。manifest にはビルド時に反映される。
 - タグ名・Release 名はバージョン番号そのまま（例: `1.0.2`）。`v` や `release-` は付けない。
 
@@ -59,7 +59,7 @@ version=$(node -p "require('./package.json').version")
 
 - `release/` とビルド成果物はコミットしない。`git status` で確認する。
 - バージョン変更は `package.json` と、更新が必要だった場合の `yarn.lock` をコミットする。メッセージは `change:` で始まる英語 1 行。
-- PR 経由で main へ反映し、マージはユーザーが行う。マージ前にタグを作成しない。
+- PR 経由で main へ反映し、CI が通ったら head SHA を固定してマージする。マージ前にタグを作成しない。
 
 ### 5. PR マージ後にタグ・GitHub Release を作る
 
@@ -84,18 +84,26 @@ gh release view <version>
 
 ### 1. 本番ビルドの実機確認
 
-スキルが作った `dist/` を `chrome://extensions`（デベロッパーモード → パッケージ化されていない拡張機能を読み込む）で読み込み、以下を確認する:
+スキルが作った `dist/` を `chrome://extensions`（デベロッパーモード → パッケージ化されていない拡張機能を読み込む）で読み込み、以下を確認する。前の `dist/` を読み込んだままの場合は、拡張機能のカードの再読み込みボタン（↻）を押してから開く。Chrome の再起動だけでは新しい `dist/` が反映されないことがある（理由と記録されたエラーの消し方は [README の Chrome への読み込み](../README.md#3-chrome-への読み込み)）:
 
 - [ ] 拡張名に `[Dev]` が**付いていない**（本番ビルドであること）
 - [ ] 対応サイトの銘柄ページ（例: `https://kabutan.jp/stock/?code=7203`）で拡張アイコンが有効になる
-- [ ] ポップアップで貸借対照表・損益計算書・キャッシュフロー計算書が描画される（本番 API 接続）
+- [ ] ポップアップで貸借対照表・損益計算書・キャッシュフロー計算書・フリー CF・ROE・ROA が描画される（本番 API 接続）
 - [ ] カルーセルの切替・ツールチップ・企業名リンクが動く
+- [ ] 上の操作のあと、拡張機能のカードに「エラー」ボタンが出ていない
 
 ### 2. Chrome Web Store へ申請
 
 [Chrome Web Store デベロッパーダッシュボード](https://chrome.google.com/webstore/devconsole) → 対象アイテム → 「パッケージ」→ スキルが作成した zip をアップロード → 審査に提出（ストアアカウントでの手動作業）。
 
-- `host_permissions` や `permissions` を変更した場合、審査で用途説明を求められることがある。本拡張の host_permissions は自社 API（investee.info）からの財務データ取得のためのもの
+- ダッシュボードの Privacy practices タブでは、manifest の権限ごとに用途説明の入力が必要（[Chrome Web Store のドキュメント](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy)）。`host_permissions` や `permissions` を追加・変更した版を申請する前に、次の用途と入力内容が合っているか確認する
+
+  | 権限                                            | 用途                                                                                                                                              |
+  | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+  | `host_permissions`（`https://investee.info/*`） | 自社 API（investee.info）からの財務データ取得                                                                                                     |
+  | `tabs`                                          | 各タブの URL から、対応サイトの銘柄ページかを判定する                                                                                             |
+  | `storage`                                       | service worker が停止しても、表示中の銘柄の財務データを `storage.session`（メモリ上に置き、ブラウザを閉じると消える）に残し、取り直さずに表示する |
+
 - 審査は通常数時間〜数日
 - 公開後、ユーザーの Chrome は数時間ごとの自動更新チェックで新バージョンに切り替わる（`chrome://extensions` の「更新」で即時反映も可能）
 
@@ -105,4 +113,4 @@ gh release view <version>
 
 ### 4. 後片付け（任意・エージェントに依頼可）
 
-- 新クエリの本番デプロイが完了していれば、`codegen.ts` の schema 参照をローカル docker から本番（`https://investee.info/api/graphql`）へ戻す PR を検討する（ローカル docker 必須の制約を外せる。詳細は [README.md](../README.md) の codegen 節）
+- バックエンドの変更を先行開発するために `codegen.ts` の schema をローカル docker へ切り替えていた場合は、新クエリの本番デプロイ後に本番（`https://investee.info/api/graphql`）へ戻す PR を作る（規約は [AGENTS.md の重要な規約](../AGENTS.md#重要な規約)）

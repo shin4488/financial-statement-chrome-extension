@@ -1,75 +1,346 @@
-import type { Mock } from 'vitest';
-import browser from 'webextension-polyfill';
-import store from '@/store/store';
-import FinancialStatementService from './financialStatement/service';
+import type { FinancialStatementResult } from './financialStatement/result';
+import { setStatus } from '@/store/slices/financialStatement';
 
-vi.mock('webextension-polyfill', () => ({
-  default: {
-    tabs: {
-      query: vi.fn(),
-      onActivated: { addListener: vi.fn() },
-      onUpdated: { addListener: vi.fn() },
-    },
-    windows: { onFocusChanged: { addListener: vi.fn() } },
-    action: { enable: vi.fn(), disable: vi.fn() },
-  },
-}));
-vi.mock('./financialStatement/service', () => ({ default: vi.fn() }));
-vi.mock('@/store/bridge', () => ({ exposeStore: vi.fn() }));
-vi.mock('@/store/store', async () => {
-  const { configureStore } =
-    await vi.importActual<typeof import('@reduxjs/toolkit')>('@reduxjs/toolkit');
-  const financialStatement = await vi.importActual<
-    typeof import('@/store/slices/financialStatement')
-  >('@/store/slices/financialStatement');
-  const sitePage = await vi.importActual<typeof import('@/store/slices/sitePageSlice')>(
-    '@/store/slices/sitePageSlice',
-  );
+const mocks = vi.hoisted(() => {
+  // storage.session はブラウザを閉じるまで残るため、service worker を起動し直しても同じ内容を返す
+  const session = new Map<string, unknown>();
+  // アイコンの有効・無効はブラウザが持ち、service worker を起動し直しても残る。キー undefined は既定値
+  const action = new Map<number | undefined, boolean>();
+  const load = vi.fn();
   return {
-    default: configureStore({
-      reducer: { financialStatement: financialStatement.default, sitePage: sitePage.default },
+    session,
+    action,
+    load,
+    exposeStore: vi.fn(),
+    browser: {
+      tabs: {
+        query: vi.fn(),
+        onActivated: { addListener: vi.fn() },
+        onUpdated: { addListener: vi.fn() },
+      },
+      windows: {
+        WINDOW_ID_NONE: -1,
+        getLastFocused: vi.fn(),
+        onFocusChanged: { addListener: vi.fn() },
+      },
+      action: {
+        enable: vi.fn(async (tabId?: number) => {
+          action.set(tabId, true);
+        }),
+        disable: vi.fn(async (tabId?: number) => {
+          action.set(tabId, false);
+        }),
+      },
+      storage: {
+        session: {
+          get: vi.fn(async (key: string) =>
+            session.has(key) ? { [key]: structuredClone(session.get(key)) } : {},
+          ),
+          set: vi.fn(async (items: Record<string, unknown>) => {
+            Object.entries(items).forEach(([key, value]) =>
+              session.set(key, structuredClone(value)),
+            );
+          }),
+        },
+      },
+    },
+    // new で呼ばれるため、アロー関数ではなく function で実装する
+    Service: vi.fn(function () {
+      return { load };
     }),
   };
 });
+vi.mock('webextension-polyfill', () => ({ default: mocks.browser }));
+vi.mock('./financialStatement/service', () => ({ default: mocks.Service }));
+vi.mock('@/store/bridge', () => ({ exposeStore: mocks.exposeStore }));
 
-it('ignores stale responses after changing companies, and distinguishes error and empty', async () => {
-  const resolves: ((result: []) => void)[] = [];
-  const rejects: ((reason: Error) => void)[] = [];
-  const load = vi.fn(
+const { browser, load } = mocks;
+const report = { id: 'report-7203', companyName: 'トヨタ自動車' } as FinancialStatementResult;
+const flush = () => new Promise((resolve) => setTimeout(resolve));
+type Tab = { id: number; windowId: number; active: boolean; url: string };
+// 最後にフォーカスしたウィンドウ（ID 1）で表示中のタブ、他のウィンドウで表示中のタブ、バックグラウンドのタブ
+const activeTab: Tab = { id: 1, windowId: 1, active: true, url: '' };
+const otherWindowTab: Tab = { id: 2, windowId: 2, active: true, url: '' };
+const backgroundTab: Tab = { id: 3, windowId: 1, active: false, url: '' };
+const openTab = (url: string) => {
+  activeTab.url = url;
+};
+// 停止していた service worker をポップアップを開いて起動したときなど、現在のウィンドウを指定した照会が空になる状態
+let currentWindowUnknown = false;
+// マニフェストの既定は有効。タブごとの設定がなければ既定値で表示される
+const iconEnabled = (tabId: number) =>
+  mocks.action.get(tabId) ?? mocks.action.get(undefined) ?? true;
+// 取得のたびに、テストから結果を返せる Promise を作る
+const pendingLoads = () => {
+  const loads: { resolve: (results: FinancialStatementResult[]) => void; reject: () => void }[] =
+    [];
+  load.mockImplementation(
     () =>
       new Promise((resolve, reject) => {
-        resolves.push(resolve);
-        rejects.push(reject);
+        loads.push({ resolve, reject: () => reject(new Error('offline')) });
       }),
   );
-  // new で呼ばれるため、アロー関数ではなく function で実装する
-  (FinancialStatementService as Mock).mockImplementation(function () {
-    return { load };
-  });
-  (browser.tabs.query as Mock).mockResolvedValue([{ url: 'https://kabutan.jp/stock/?code=7203' }]);
+  return loads;
+};
+
+// service worker の起動を模す: モジュールを読み込み直し、初期状態の store で background を始める
+const startServiceWorker = async () => {
+  vi.resetModules();
+  const { default: store } = await import('@/store/store');
   await import('./index');
-  await Promise.resolve();
+  await flush();
+  // 更新通知を渡してから結果を待つ。続けて届いた通知は、間を空けずに渡す
+  const updateTabOf = async (tab: Tab, ...changes: Record<string, string>[]) => {
+    changes.forEach((changeInfo) =>
+      browser.tabs.onUpdated.addListener.mock.lastCall?.[0](tab.id, changeInfo, { ...tab }),
+    );
+    await flush();
+  };
+  return {
+    store,
+    updateTab: (...changes: Record<string, string>[]) => updateTabOf(activeTab, ...changes),
+    updateTabOf,
+    activateTab: async () => {
+      browser.tabs.onActivated.addListener.mock.lastCall?.[0]({ tabId: activeTab.id });
+      await flush();
+    },
+    // ページを読み込むと、そのタブのアイコンの設定は消えてから読み込み開始が通知される
+    navigateTab: async (tab: Tab, url: string) => {
+      tab.url = url;
+      mocks.action.delete(tab.id);
+      await updateTabOf(tab, { status: 'loading', url });
+    },
+    focusWindow: async (windowId = 1) => {
+      browser.windows.onFocusChanged.addListener.mock.lastCall?.[0](windowId);
+      await flush();
+    },
+    // ポップアップを開いたとき、または停止していた service worker へポップアップが接続し直したとき。
+    // bridge は onConnect の Promise が終わってから状態を送るため、そのときの表示結果をポップアップが最初に受け取る
+    connectPopup: async () => {
+      await mocks.exposeStore.mock.lastCall?.[1]?.onConnect?.();
+      const firstStatus = store.getState().financialStatement.status;
+      await flush();
+      return firstStatus;
+    },
+  };
+};
+
+beforeEach(() => {
+  // 各テストで差し替えた応答を、vi.fn に渡した実装へ戻す
+  vi.resetAllMocks();
+  mocks.session.clear();
+  mocks.action.clear();
+  activeTab.url = '';
+  otherWindowTab.url = 'https://kabutan.jp/stock/?code=7203';
+  backgroundTab.url = 'https://example.com/';
+  currentWindowUnknown = false;
+  browser.windows.getLastFocused.mockResolvedValue({ id: activeTab.windowId, focused: true });
+  type Query = { active?: boolean; windowId?: number; currentWindow?: boolean };
+  browser.tabs.query.mockImplementation(async ({ active, windowId, currentWindow }: Query) => {
+    if (currentWindow && currentWindowUnknown) {
+      return [];
+    }
+    const inWindow = currentWindow ? activeTab.windowId : windowId;
+    return [activeTab, otherWindowTab, backgroundTab]
+      .filter((tab) => active === undefined || tab.active === active)
+      .filter((tab) => inWindow === undefined || tab.windowId === inWindow)
+      .map((tab) => ({ ...tab }));
+  });
+});
+
+it('ignores stale responses after changing companies, and distinguishes error and empty', async () => {
+  const loads = pendingLoads();
+  openTab('https://kabutan.jp/stock/?code=7203');
+  const { store, updateTab, activateTab } = await startServiceWorker();
   expect(store.getState().financialStatement.status).toBe('loading');
-  const refresh = (browser.tabs.onUpdated.addListener as Mock).mock.calls[0][0];
-  await refresh(); // 同じページの更新で二重に取得しない
+  await updateTab({ status: 'loading' }); // 同じページの読み込み直しで二重に取得しない
   expect(load).toHaveBeenCalledTimes(1);
-  (browser.tabs.query as Mock).mockResolvedValue([{ url: 'https://kabutan.jp/stock/?code=6758' }]);
-  const pending = refresh();
-  await Promise.resolve();
-  resolves[0]([]);
-  await Promise.resolve();
+  openTab('https://kabutan.jp/stock/?code=6758');
+  await updateTab({ status: 'loading', url: activeTab.url });
+  loads[0].resolve([]);
+  await flush();
   expect(store.getState().financialStatement.status).toBe('loading');
-  rejects[1](new Error('offline'));
-  await pending;
+  loads[1].reject();
+  await flush();
   expect(store.getState().financialStatement.status).toBe('error');
-  const retry = refresh();
-  await Promise.resolve();
-  resolves[2]([]);
-  await retry;
+  await activateTab();
+  loads[2].resolve([]);
+  await flush();
   expect(store.getState().financialStatement.status).toBe('empty');
-  (browser.tabs.query as Mock).mockResolvedValue([{ url: 'https://example.com/' }]);
-  await refresh();
+  openTab('https://example.com/');
+  await updateTab({ url: activeTab.url });
   expect(store.getState().sitePage.stockCode).toBe('');
   expect(store.getState().financialStatement.status).toBe('idle');
-  expect(browser.action.disable).toHaveBeenCalled();
+  expect(iconEnabled(activeTab.id)).toBe(false);
+});
+
+it('keeps the results after the service worker restarts and does not load the same page again', async () => {
+  load.mockResolvedValue([report]);
+  openTab('https://kabutan.jp/stock/?code=7203');
+  const first = await startServiceWorker();
+  expect(first.store.getState().financialStatement.status).toBe('success');
+
+  const restarted = await startServiceWorker();
+  expect(restarted.store.getState()).toEqual(first.store.getState());
+  await restarted.updateTab({ status: 'loading' });
+  expect(load).toHaveBeenCalledTimes(1);
+});
+
+it('loads again when the service worker stopped before the results arrived', async () => {
+  pendingLoads();
+  openTab('https://kabutan.jp/stock/?code=7203');
+  const first = await startServiceWorker();
+  expect(first.store.getState().financialStatement.status).toBe('loading');
+
+  load.mockResolvedValue([report]);
+  const restarted = await startServiceWorker();
+  expect(load).toHaveBeenCalledTimes(2);
+  expect(restarted.store.getState().financialStatement).toEqual({
+    status: 'success',
+    results: [report],
+  });
+});
+
+it('still follows the active page when the state cannot be read or saved', async () => {
+  browser.storage.session.get.mockRejectedValue(new Error('unavailable'));
+  browser.storage.session.set.mockImplementation(() => {
+    throw new Error('unavailable');
+  });
+  load.mockResolvedValue([]);
+  openTab('https://kabutan.jp/stock/?code=6758');
+  const { store } = await startServiceWorker();
+  expect(store.getState().sitePage).toEqual({ siteDomain: 'kabutan.jp', stockCode: '6758' });
+  expect(store.getState().financialStatement.status).toBe('empty');
+});
+
+it('retries a failed page when the popup connects, the tab or window is switched, or its URL changes', async () => {
+  load.mockRejectedValue(new Error('offline'));
+  openTab('https://kabutan.jp/stock/?code=7203');
+  const first = await startServiceWorker();
+  expect(first.store.getState().financialStatement.status).toBe('error');
+  await first.updateTabOf(backgroundTab, { status: 'loading' });
+  await first.updateTabOf(otherWindowTab, { status: 'loading' });
+  // iframe の読み込みとページの読み込み直しは、どちらも読み込み開始だけが通知され区別できない
+  await first.updateTab({ status: 'loading' }, { status: 'complete' });
+  await first.updateTab({ title: 'トヨタ自動車' });
+  const restarted = await startServiceWorker();
+  expect(load).toHaveBeenCalledTimes(1);
+  expect(restarted.store.getState().financialStatement.status).toBe('error');
+
+  await restarted.connectPopup();
+  expect(load).toHaveBeenCalledTimes(2);
+  // 同じ銘柄のまま URL だけが変わったとき（サイト内の別タブなど）。直後に読み込み完了・タイトルの通知が続けて届いても、やり直しは取り消されない
+  openTab('https://kabutan.jp/stock/finance?code=7203');
+  await restarted.updateTab(
+    { status: 'loading', url: activeTab.url },
+    { status: 'complete' },
+    { title: 'トヨタ' },
+  );
+  expect(load).toHaveBeenCalledTimes(3);
+  await restarted.activateTab();
+  expect(load).toHaveBeenCalledTimes(4);
+  load.mockResolvedValue([report]);
+  await restarted.focusWindow();
+  expect(load).toHaveBeenCalledTimes(5);
+  expect(restarted.store.getState().financialStatement.status).toBe('success');
+  // 取得できたページは、ポップアップが接続しても取り直さない
+  await restarted.connectPopup();
+  expect(load).toHaveBeenCalledTimes(5);
+});
+
+it('sends a popup connecting to a failed page the retry, not the failure', async () => {
+  const loads = pendingLoads();
+  openTab('https://kabutan.jp/stock/?code=7203');
+  const { store, connectPopup } = await startServiceWorker();
+  loads[0].reject();
+  await flush();
+  expect(store.getState().financialStatement.status).toBe('error');
+
+  expect(await connectPopup()).toBe('loading');
+  expect(load).toHaveBeenCalledTimes(2);
+  // 取得できたページは、取り直さずにそのまま送る
+  loads[1].resolve([report]);
+  await flush();
+  expect(await connectPopup()).toBe('success');
+  expect(load).toHaveBeenCalledTimes(2);
+});
+
+it('sends a connecting popup the retry even when a later update takes over the check', async () => {
+  load.mockRejectedValue(new Error('offline'));
+  openTab('https://kabutan.jp/stock/?code=7203');
+  const { store, connectPopup, updateTab } = await startServiceWorker();
+  expect(store.getState().financialStatement.status).toBe('error');
+
+  // 接続の直後に表示中のタブの更新（iframe の読み込みなど）が届き、その確認のウィンドウ照会が遅れる
+  let finishQuery = () => {};
+  const shownWindow = { id: activeTab.windowId, focused: true };
+  browser.windows.getLastFocused.mockResolvedValueOnce(shownWindow).mockReturnValueOnce(
+    new Promise((resolve) => {
+      finishQuery = () => resolve(shownWindow);
+    }),
+  );
+  pendingLoads();
+  const connecting = connectPopup();
+  await updateTab({ status: 'loading' });
+  finishQuery();
+  expect(await connecting).toBe('loading');
+  expect(load).toHaveBeenCalledTimes(2);
+});
+
+it('follows the shown tab even when the current window cannot be queried', async () => {
+  load.mockResolvedValue([report]);
+  openTab('https://kabutan.jp/stock/?code=7203');
+  await startServiceWorker();
+
+  // 停止していた service worker をポップアップを開いて起動し、開いたままページが別の銘柄へ移る
+  currentWindowUnknown = true;
+  const restarted = await startServiceWorker();
+  openTab('https://kabutan.jp/stock/?code=6758');
+  await restarted.updateTab({ status: 'loading', url: activeTab.url });
+  expect(load).toHaveBeenCalledTimes(2);
+  expect(restarted.store.getState().sitePage.stockCode).toBe('6758');
+  expect(restarted.store.getState().financialStatement).toEqual({
+    status: 'success',
+    results: [report],
+  });
+});
+
+it('keeps the page when no window is found, and does not retry it while no window has focus', async () => {
+  load.mockResolvedValue([report]);
+  openTab('https://kabutan.jp/stock/?code=7203');
+  const first = await startServiceWorker();
+  const shown = first.store.getState();
+  expect(shown.financialStatement.status).toBe('success');
+
+  browser.windows.getLastFocused.mockRejectedValue(new Error('No last-focused window'));
+  const restarted = await startServiceWorker();
+  expect(restarted.store.getState()).toEqual(shown);
+
+  // 失敗した取得も、Chrome のウィンドウからフォーカスが外れただけではやり直さない
+  browser.windows.getLastFocused.mockResolvedValue({ id: activeTab.windowId, focused: false });
+  restarted.store.dispatch(setStatus('error'));
+  await restarted.focusWindow(browser.windows.WINDOW_ID_NONE);
+  expect(load).toHaveBeenCalledTimes(1);
+  await restarted.focusWindow();
+  expect(load).toHaveBeenCalledTimes(2);
+  expect(restarted.store.getState()).toEqual(shown);
+});
+
+it('enables the icon per tab, so a stock page in a window without focus stays enabled', async () => {
+  openTab('https://example.com/');
+  const { navigateTab, focusWindow } = await startServiceWorker();
+  expect(iconEnabled(activeTab.id)).toBe(false);
+  expect(iconEnabled(otherWindowTab.id)).toBe(true);
+  expect(iconEnabled(backgroundTab.id)).toBe(false);
+
+  await focusWindow();
+  expect(iconEnabled(otherWindowTab.id)).toBe(true);
+  await navigateTab(otherWindowTab, otherWindowTab.url);
+  expect(iconEnabled(otherWindowTab.id)).toBe(true);
+  // バックグラウンドのタブも、切り替える前から銘柄ページの状態にする（財務データは取得しない）
+  await navigateTab(backgroundTab, 'https://kabutan.jp/stock/?code=6758');
+  expect(iconEnabled(backgroundTab.id)).toBe(true);
+  await navigateTab(otherWindowTab, 'https://example.com/other');
+  expect(iconEnabled(otherWindowTab.id)).toBe(false);
+  expect(load).not.toHaveBeenCalled();
 });

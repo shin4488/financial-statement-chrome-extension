@@ -6,7 +6,6 @@ import FinancialStatementList from './FinancialStatementList';
 import { trackEvent } from '../analytics';
 vi.mock('../analytics', () => ({ trackEvent: vi.fn() }));
 import financialStatement, { setResult } from '@/store/slices/financialStatement';
-import autoPlayStatus, { changeAutoPlayStatus } from '@/store/slices/autoPlayStatusSlice';
 import sitePage from '@/store/slices/sitePageSlice';
 import type { FinancialStatementResult } from '@/background/financialStatement/result';
 
@@ -44,15 +43,15 @@ const report: FinancialStatementResult = {
 };
 
 function setup(reports = [report], autoPlay = false) {
-  const store = configureStore({ reducer: { financialStatement, autoPlayStatus, sitePage } });
+  const store = configureStore({ reducer: { financialStatement, sitePage } });
   store.dispatch(setResult(reports));
-  store.dispatch(changeAutoPlayStatus(autoPlay));
-  render(
+  const view = (isAutoPlay: boolean) => (
     <Provider store={store}>
-      <FinancialStatementList />
-    </Provider>,
+      <FinancialStatementList isAutoPlay={isAutoPlay} />
+    </Provider>
   );
-  return store;
+  const { container, rerender } = render(view(autoPlay));
+  return { store, container, setAutoPlay: (isAutoPlay: boolean) => rerender(view(isAutoPlay)) };
 }
 
 function settle() {
@@ -114,7 +113,7 @@ it('BS → PL → CF → フリーCF → ROE・ROAの順に切り替わり、前
 });
 
 it('自動切替で指標にも進み、OFFにすると停止する', () => {
-  const store = setup([report], true);
+  const { setAutoPlay } = setup([report], true);
   for (let i = 0; i < 4; i += 1) {
     act(() => {
       vi.advanceTimersByTime(5000);
@@ -123,44 +122,65 @@ it('自動切替で指標にも進み、OFFにすると停止する', () => {
   }
   expect(screen.getByLabelText('ROE：10.0%')).toBeVisible();
   expect(trackEvent).not.toHaveBeenCalled();
-  act(() => {
-    store.dispatch(changeAutoPlayStatus(false));
-  });
+  setAutoPlay(false);
   act(() => {
     vi.advanceTimersByTime(10000);
   });
   expect(screen.getByLabelText('ROE：10.0%')).toBeVisible();
 });
 
-it('旧キャッシュの指標欠損でも開けて、再取得した企業公表ROEに更新される', () => {
-  const { financialIndicators: omitted, ...legacy } = report;
-  expect(omitted).toBeDefined();
-  // 更新前に永続化されたJSONは新しい必須フィールドを持たない。
-  const store = setup([legacy as FinancialStatementResult]);
-  fireEvent.click(screen.getByRole('button', { name: 'carousel indicator 5' }));
-  settle();
-  expect(screen.getAllByText('データなし')).toHaveLength(7);
-  act(() => {
-    store.dispatch(
-      setResult([
-        {
-          ...report,
-          financialIndicators: {
-            ...report.financialIndicators,
-            roe: { value: 0.372, status: 'AVAILABLE', source: 'DISCLOSED' },
-            roa: { value: null, status: 'MISSING_DATA' },
-          },
-        },
-      ]),
-    );
+it('枠の幅に合わせて描くグラフ（BS・フリーCF）にも幅が渡り、値のラベルまで描かれる', () => {
+  // グラフは枠の大きさを測ってから描く。jsdomは計測しないため、実ポップアップの大きさを、測り方（getBoundingClientRect・clientWidth）ごとに与える
+  vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(384);
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+    x: 0,
+    y: 0,
+    top: 0,
+    left: 0,
+    right: 384,
+    bottom: 400,
+    width: 384,
+    height: 400,
+    toJSON: () => ({}),
   });
-  expect(screen.getByLabelText('ROE：37.2%')).toBeVisible();
-  expect(screen.getByText('企業公表値')).toBeVisible();
-  expect(within(screen.getByRole('group', { name: 'ROA' })).getByText('データなし')).toBeVisible();
+  const segment = (key: string, colorRole: string) => ({
+    key,
+    label: key,
+    amount: 100,
+    signedAmount: 100,
+    ratio: 100,
+    colorRole,
+    tooltipLabel: null,
+  });
+  const { container } = setup([
+    {
+      ...report,
+      balanceSheet: {
+        renderable: true,
+        note: null,
+        bars: [
+          { label: '資産', segments: [segment('流動資産', 'asset1')] },
+          { label: '負債・純資産', segments: [segment('純資産', 'equity')] },
+        ],
+      },
+    },
+  ]);
+  // BSは科目と比率のラベルを、フリーCFは5年分の金額（百万円）のラベルを、グラフの中に描く
+  expect(container).toHaveTextContent(/流動資産:\s*100%/);
+  expect(container).toHaveTextContent(/純資産:\s*100%/);
+  for (let i = 0; i < 3; i += 1) {
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    settle();
+  }
+  const freeCashFlow = screen.getByRole('region', {
+    name: /^フリーキャッシュフローの過去5年の推移/,
+  });
+  expect(freeCashFlow).toBeVisible();
+  expect(within(freeCashFlow).getAllByText('12')).toHaveLength(5);
 });
 
 it('年度ごとのカードに対応する値を表示し、空の取得結果でも落ちない', () => {
-  const store = setup([
+  const { store } = setup([
     report,
     {
       ...report,

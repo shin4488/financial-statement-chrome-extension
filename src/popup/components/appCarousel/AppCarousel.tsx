@@ -14,6 +14,7 @@ const NavigateNext = createSvgIcon(
 );
 const Dot = createSvgIcon(<circle cx="12" cy="12" r="8" />, 'FiberManualRecord');
 
+// 計測で送るグラフの種類。添字で FinancialStatementList が渡すスライドと対応付けるため、スライドの順と同じ並びにする
 const chartTypes: EventParams['chart_type'][] = ['bs', 'pl', 'cf', 'fcf', 'indicators'];
 const interval = 5000;
 const duration = 100;
@@ -42,10 +43,24 @@ interface AppCarouselState {
   // 切替中だけ、直前のスライドを退出アニメーションのために表示する
   previous: number | null;
   forward: boolean;
+  // スライドごとの key。表示から外れるたびに変えて、スライドを作り直す
+  generations: number[];
+}
+
+// 表示から外れたスライドは作り直し、ツールチップの表示などの操作中の状態を次の表示へ持ち越さない。
+// マウスを動かさずに切り替えると、隠れたスライドにマウスが離れたことが届くとは限らない。
+// Recharts のツールチップは visibility を自身で指定するため、状態が残ると隠れたスライドからも見える
+function hide(generations: number[], index: number | null): number[] {
+  if (index === null) {
+    return generations;
+  }
+  const next = [...generations];
+  next[index] = (next[index] ?? 0) + 1;
+  return next;
 }
 
 export default class AppCarousel extends React.Component<AppCarouselProps, AppCarouselState> {
-  state: AppCarouselState = { active: 0, previous: null, forward: true };
+  state: AppCarouselState = { active: 0, previous: null, forward: true, generations: [] };
   private autoPlayTimer?: ReturnType<typeof setInterval>;
   private exitTimer?: ReturnType<typeof setTimeout>;
 
@@ -67,8 +82,7 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
   }
 
   private show(index: number, forward: boolean, manual: boolean): void {
-    const { active } = this.state;
-    if (index === active) {
+    if (index === this.state.active) {
       return;
     }
     if (manual) {
@@ -78,8 +92,22 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
       });
     }
     clearTimeout(this.exitTimer);
-    this.setState({ active: index, previous: active, forward });
-    this.exitTimer = setTimeout(() => this.setState({ previous: null }), duration);
+    this.setState((state) => ({
+      active: index,
+      previous: state.active,
+      forward,
+      // 退出中に次の切替が来たら、退出中だったスライドはここで表示から外れる
+      generations:
+        state.previous === index ? state.generations : hide(state.generations, state.previous),
+    }));
+    this.exitTimer = setTimeout(
+      () =>
+        this.setState(({ previous, generations }) => ({
+          previous: null,
+          generations: hide(generations, previous),
+        })),
+      duration,
+    );
   }
 
   private move(step: 1 | -1, manual = false): void {
@@ -87,40 +115,35 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
   }
 
   render(): React.ReactNode {
-    const { active, previous, forward } = this.state;
+    const { active, previous, forward, generations } = this.state;
     const animation = `${duration}ms ease-in-out`;
     return (
       <Box position="relative" overflow="hidden">
-        {React.Children.map(this.props.children, (child, index) => {
-          if (index === active) {
+        {/* 全スライドを同じセルに重ね、高さを最も高いスライドに揃える。表示中のスライドの高さに合わせると、切替のたびに下端のナビボタンが上下に動き、出ていくスライドがナビ行に重なる */}
+        <Box display="grid" gridTemplateColumns="minmax(0, 1fr)">
+          {React.Children.map(this.props.children, (child, index) => {
+            const leaving = index === previous;
+            let slideAnimation: string | undefined;
+            if (index === active && previous !== null) {
+              slideAnimation = `${forward ? slide.enterFromRight : slide.enterFromLeft} ${animation}`;
+            } else if (leaving) {
+              slideAnimation = `${forward ? slide.exitToLeft : slide.exitToRight} ${animation} forwards`;
+            }
             return (
               <Box
-                position="relative"
+                key={generations[index] ?? 0}
+                aria-hidden={index === active ? undefined : true}
                 sx={{
-                  animation:
-                    previous === null
-                      ? undefined
-                      : `${forward ? slide.enterFromRight : slide.enterFromLeft} ${animation}`,
+                  gridArea: '1 / 1',
+                  visibility: index === active || leaving ? undefined : 'hidden',
+                  animation: slideAnimation,
                 }}
               >
                 {child}
               </Box>
             );
-          }
-          return (
-            <Box
-              position="absolute"
-              top={0}
-              width="100%"
-              sx={{
-                display: index === previous ? undefined : 'none',
-                animation: `${forward ? slide.exitToLeft : slide.exitToRight} ${animation} forwards`,
-              }}
-            >
-              {child}
-            </Box>
-          );
-        })}
+          })}
+        </Box>
         <IconButton
           aria-label="Previous"
           onClick={() => this.move(-1, true)}

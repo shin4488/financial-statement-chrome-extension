@@ -1,8 +1,6 @@
 import { allReports, healthyReport, lossReport, scenarios, zeroReport } from './fixtures';
 import { colorByRole } from '../../src/shared/financialCharts/colorRoles';
 
-const currentReports = allReports.filter((report) => report.id !== 'preview-legacy');
-
 describe('表示確認データの会計・API契約', () => {
   it('正常BSは負債と純資産で資産合計に釣り合い、純資産を透明な空白にしない', () => {
     const [assets, credit] = healthyReport.balanceSheet.bars;
@@ -46,7 +44,7 @@ describe('表示確認データの会計・API契約', () => {
     });
   });
 
-  it.each(currentReports)('$id: 描画用の値・色・科目キーとPLの左右合計が有効', (report) => {
+  it.each(allReports)('$id: 描画用の値・色・科目キーとPLの左右合計が有効', (report) => {
     for (const chart of [report.balanceSheet, report.profitLoss]) {
       if (!chart.renderable) {
         expect(chart.note).toBeTruthy();
@@ -72,7 +70,7 @@ describe('表示確認データの会計・API契約', () => {
     }
   });
 
-  it.each(currentReports)('$id: CFの期首＋増減＝期末、フリーCF＝営業＋投資CF', (report) => {
+  it.each(allReports)('$id: CFの期首＋増減＝期末、フリーCF＝営業＋投資CF', (report) => {
     if (!report.cashFlow.renderable) {
       expect(report.cashFlow.steps).toEqual([]);
       return;
@@ -95,7 +93,7 @@ describe('表示確認データの会計・API契約', () => {
     expect(latest.investingCf).toBe(steps.find((item) => item.key === 'investing')?.amount);
   });
 
-  it.each(currentReports)('$id: 算出されたROE・ROAは分解指標の積と一致する', (report) => {
+  it.each(allReports)('$id: 算出されたROE・ROAは分解指標の積と一致する', (report) => {
     const metrics = report.financialIndicators;
     for (const metric of Object.values(metrics)) {
       if (metric.status === 'AVAILABLE') {
@@ -124,13 +122,10 @@ describe('表示確認データの会計・API契約', () => {
     expect(healthyReport.cashFlow.steps[1].amount).toBe(150_000_000);
   });
 
-  it('複数年度・企業・旧キャッシュ・空・読込中・失敗を選べる', () => {
+  it('複数年度・企業・空・読込中・失敗を選べる', () => {
     expect(scenarios.find((item) => item.id === 'normal')?.reports).toHaveLength(2);
     expect(new Set(allReports.map((report) => report.id)).size).toBe(allReports.length);
     expect(new Set(allReports.map((report) => report.companyName)).size).toBeGreaterThan(1);
-    expect(scenarios.find((item) => item.id === 'legacy')?.reports[0]).not.toHaveProperty(
-      'financialIndicators',
-    );
     for (const id of ['empty', 'loading', 'error']) {
       expect(scenarios.find((item) => item.id === id)?.status).toBe(id);
       expect(scenarios.find((item) => item.id === id)?.reports).toEqual([]);

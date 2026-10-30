@@ -11,20 +11,20 @@ import { FinancialIndicators } from '@/shared/financialIndicators';
 import { trackEvent } from '../analytics';
 import { RootState } from '@/store/store';
 
-// 会計基準は日本基準以外のみサブヘッダに表示する（判断材料として意味を持つのは
-// 「日本基準とは表示形式が違う」ことを示す場合だけのため）。
-// accountingStandardを描画分岐に使わないことがこの設計の規律
+// 会計基準は日本基準以外のみサブヘッダに表示する（判断材料として意味を持つのは「日本基準とは表示形式が違う」ことを示す場合だけのため）。
+// accountingStandardはこの表示だけに使い、チャートの描画を分岐させない（チャートの構造はAPIの返却値に従う）
 const nonJgaapBadge: Record<string, string> = {
   ifrs: 'IFRS',
   us_gaap: '米国基準',
 };
 
 const mapStateToProps = (state: RootState) => ({
-  isAutoPlay: state.autoPlayStatus.isAutoPlay,
   status: state.financialStatement.status,
   financialStatementResults: state.financialStatement.results,
 });
-type FinancialStatementListWithStoreProps = ReturnType<typeof mapStateToProps>;
+type FinancialStatementListWithStoreProps = ReturnType<typeof mapStateToProps> & {
+  isAutoPlay: boolean;
+};
 
 class FinancialStatementList extends React.Component<FinancialStatementListWithStoreProps> {
   render(): React.ReactNode {
@@ -57,8 +57,7 @@ class FinancialStatementList extends React.Component<FinancialStatementListWithS
           {this.props.financialStatementResults.map((statement) => {
             const consolidationTypeLabel =
               statement.consolidationType === 'consolidated' ? '連結' : '単体';
-            // hasOwnPropertyで引く: 素の[]アクセスだとaccountingStandardが"constructor"等のとき
-            // Object.prototypeのメンバーがラベルとして描画されるため
+            // hasOwnPropertyで引く: 素の[]アクセスだとaccountingStandardが"constructor"等のときObject.prototypeのメンバーがラベルとして描画されるため
             const standardLabel = Object.prototype.hasOwnProperty.call(
               nonJgaapBadge,
               statement.accountingStandard,
@@ -90,8 +89,8 @@ class FinancialStatementList extends React.Component<FinancialStatementListWithS
                     subheader={`${statement.fiscalYearStartDate} - ${statement.fiscalYearEndDate}${subheaderSuffix}`}
                   />
                   <CardContent>
-                    <AppCarousel isAutoPlay={this.props.isAutoPlay} stopAutoPlayOnHover={false}>
-                      {/* 貸借対照表・損益計算書・キャッシュフロー計算書・フリーCF。
+                    <AppCarousel isAutoPlay={this.props.isAutoPlay}>
+                      {/* 貸借対照表・損益計算書・キャッシュフロー計算書・フリーCF・ROE・ROA。
                           チャート構造はAPIの返却値をそのまま渡す（表示不可はrenderable/noteで届く） */}
                       <StackedBarChart chart={statement.balanceSheet} width="100%" />
                       <StackedBarChart chart={statement.profitLoss} width="100%" />

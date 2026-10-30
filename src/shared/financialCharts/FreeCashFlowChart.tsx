@@ -7,11 +7,11 @@ import {
   LabelList,
   ReferenceDot,
   ReferenceLine,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
+import { inDeclarationOrder } from './drawOrder';
 import { colorByRole } from './colorRoles';
 import type { FreeCashFlowTrend } from './types';
 
@@ -61,27 +61,32 @@ type ValueLabelProps = {
   y?: number;
   width?: number;
   height?: number;
-  value?: number | null;
-  index?: number;
+  // LabelListのdataKeyに指定した年
+  value?: number | string | null;
+  rows?: Row[];
   compact?: boolean;
   compactPositions?: { x: number; y: number }[];
 };
 
 function ValueLabel(props: ValueLabelProps) {
-  const { x, y, width, height, value, index, compact, compactPositions } = props;
-  if (x == null || y == null || width == null || value == null) {
+  const { x, y, width, height, value, rows, compact, compactPositions } = props;
+  // rechartsは金額のない年の棒を描かず、LabelListのindexは描いた棒の番号になる。
+  // 金額と狭いカードでの位置は、年で元の行から引く
+  const rowIndex = rows?.findIndex((row) => row.year === value) ?? -1;
+  const amount = rowIndex >= 0 ? rows?.[rowIndex]?.amount : null;
+  if (x == null || y == null || width == null || amount == null) {
     return null;
   }
-  const labelY = value < 0 && height != null ? y + height - 7 : y - 7;
-  const label = amountLabel(value);
-  const compactPosition = compact && index != null ? compactPositions?.[index] : null;
+  const labelY = amount < 0 && height != null ? y + height - 7 : y - 7;
+  const label = amountLabel(amount);
+  const compactPosition = compact ? compactPositions?.[rowIndex] : null;
   return (
     <text
       x={compactPosition?.x ?? x + width / 2}
       y={compactPosition?.y ?? labelY}
       textAnchor="middle"
       fontSize={16}
-      fill={value < 0 ? colorByRole.cashDecrease : colorByRole.cashIncrease}
+      fill={amount < 0 ? colorByRole.cashDecrease : colorByRole.cashIncrease}
     >
       {label}
     </text>
@@ -167,7 +172,20 @@ function PointTooltip({ active, payload }: { active?: boolean; payload?: { paylo
 }
 
 export function FreeCashFlowChart({ trend }: { trend: FreeCashFlowTrend }) {
+  const chartElement = React.useRef<HTMLDivElement>(null);
   const [chartWidth, setChartWidth] = React.useState(0);
+  // 金額ラベルの位置と目盛りの文字の大きさを、グラフを描く幅と同じ幅で決めるため、幅を測ってグラフに渡す
+  React.useLayoutEffect(() => {
+    const element = chartElement.current;
+    if (!trend.renderable || !element) {
+      return;
+    }
+    const updateWidth = () => setChartWidth(element.clientWidth);
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(element);
+    updateWidth();
+    return () => observer.disconnect();
+  }, [trend.renderable]);
   const compactLabels = chartWidth > 0 && chartWidth < 470;
   const rows: Row[] = trend.points.map((point) => ({
     ...point,
@@ -236,14 +254,15 @@ export function FreeCashFlowChart({ trend }: { trend: FreeCashFlowTrend }) {
       </Stack>
       {trend.renderable ? (
         <>
-          <Box mt={1}>
-            <ResponsiveContainer
-              width="100%"
-              height={CHART_HEIGHT}
-              onResize={(width) => setChartWidth(width)}
-            >
+          <Box ref={chartElement} mt={1} height={CHART_HEIGHT}>
+            {/* 非表示のカルーセル項目は幅が0になるため、実寸があるときだけ描画する */}
+            {chartWidth > 0 && (
               <BarChart
                 data={rows}
+                width={chartWidth}
+                height={CHART_HEIGHT}
+                // recharts 3は既定でグラフをTabで止まる要素にし、左右キーでツールチップを動かす。recharts 2と同じく、キーボードでは操作しない
+                accessibilityLayer={false}
                 margin={{
                   top: compactLabels ? COMPACT_TOP_MARGIN : 25,
                   right: 4,
@@ -258,7 +277,7 @@ export function FreeCashFlowChart({ trend }: { trend: FreeCashFlowTrend }) {
                   tick={{ fontSize: tickFontSize }}
                 />
                 <YAxis hide width={0} domain={domain} />
-                <ReferenceLine y={0} stroke="#8f9bad" />
+                <ReferenceLine y={0} stroke="#8f9bad" zIndex={inDeclarationOrder} />
                 {rows
                   .filter((point) => point.amount == null)
                   .map((point) => (
@@ -272,7 +291,9 @@ export function FreeCashFlowChart({ trend }: { trend: FreeCashFlowTrend }) {
                         position: 'top',
                         fill: '#687587',
                         fontSize: 10,
+                        zIndex: inDeclarationOrder,
                       }}
+                      zIndex={inDeclarationOrder}
                     />
                   ))}
                 <Tooltip cursor={false} content={<PointTooltip />} />
@@ -281,11 +302,17 @@ export function FreeCashFlowChart({ trend }: { trend: FreeCashFlowTrend }) {
                   barSize={32}
                   minPointSize={3}
                   isAnimationActive={false}
+                  zIndex={inDeclarationOrder}
                 >
                   <LabelList
-                    dataKey="amount"
+                    dataKey="year"
+                    zIndex={inDeclarationOrder}
                     content={
-                      <ValueLabel compact={compactLabels} compactPositions={compactPositions} />
+                      <ValueLabel
+                        rows={rows}
+                        compact={compactLabels}
+                        compactPositions={compactPositions}
+                      />
                     }
                   />
                   {rows.map((point) => (
@@ -302,7 +329,7 @@ export function FreeCashFlowChart({ trend }: { trend: FreeCashFlowTrend }) {
                   ))}
                 </Bar>
               </BarChart>
-            </ResponsiveContainer>
+            )}
           </Box>
           {trend.note && (
             <Typography

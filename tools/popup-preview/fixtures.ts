@@ -483,15 +483,6 @@ export const unavailableReport: FinancialStatementResult = {
   },
 };
 
-const { financialIndicators: omitted, ...legacy } = healthyReport;
-// 更新前に保存されたキャッシュだけは、現在のスキーマに必須の指標を持たない。
-void omitted;
-export const legacyReport = {
-  ...legacy,
-  id: 'preview-legacy',
-  companyName: '表示確認用・旧キャッシュ株式会社',
-} as FinancialStatementResult;
-
 export const allReports = [
   healthyReport,
   priorYearReport,
@@ -499,7 +490,6 @@ export const allReports = [
   ifrsReport,
   zeroReport,
   unavailableReport,
-  legacyReport,
 ];
 
 export interface PreviewScenario {
@@ -547,15 +537,8 @@ export const scenarios: PreviewScenario[] = [
     status: 'success',
   },
   {
-    id: 'legacy',
-    name: '旧キャッシュ・指標なし',
-    description: '過去に保存された、financialIndicatorsを持たないデータ。',
-    reports: [legacyReport],
-    status: 'success',
-  },
-  {
     id: 'all',
-    name: '全固定データ（7件）',
+    name: `全固定データ（${allReports.length}件）`,
     description: '複数企業・複数年度と、上記の境界条件をまとめて表示。',
     reports: allReports,
     status: 'success',

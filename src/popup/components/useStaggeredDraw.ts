@@ -2,9 +2,9 @@ import { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom';
 import { ScrollRootContext } from './defaultLayout/scrollRoot';
 
-// 置いた時点で、スクロールする領域の表示範囲とその下の高さの半分までにある要素は、最初の表示から描く。
-// スクロールで次のフレームに見えてくることがあるため
-const drawAtOnceScreens = 1.5;
+// 置いた時点で、スクロールする領域の表示範囲とその下の高さの0.3倍までにある要素は、最初の表示から描く。
+// スクロールで次のフレームに見えてくることがあるため。広げるほど、最初の表示までに描く要素が増える
+const drawAtOnceScreens = 1.3;
 
 // 描く順番を待っている要素
 const waiting: (() => void)[] = [];

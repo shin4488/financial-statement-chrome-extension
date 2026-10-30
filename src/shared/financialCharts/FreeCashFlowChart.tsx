@@ -7,13 +7,13 @@ import {
   LabelList,
   ReferenceDot,
   ReferenceLine,
-  ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
 import { colorByRole } from './colorRoles';
 import type { FreeCashFlowTrend } from './types';
+import { useChartSize } from './useChartSize';
 
 type Point = FreeCashFlowTrend['points'][number];
 type Row = Point & { amountMillions: number | null; periodLabel: string };
@@ -166,8 +166,15 @@ function PointTooltip({ active, payload }: { active?: boolean; payload?: { paylo
   );
 }
 
-export function FreeCashFlowChart({ trend }: { trend: FreeCashFlowTrend }) {
-  const [chartWidth, setChartWidth] = React.useState(0);
+export function FreeCashFlowChart({
+  trend,
+  deferred = false,
+}: {
+  trend: FreeCashFlowTrend;
+  // trueの間は、グラフと同じ大きさの枠だけを置いてグラフを描かない。見えないグラフを描く処理を、呼び出し元が後回しにするために使う
+  deferred?: boolean;
+}) {
+  const [chartElement, { width: chartWidth }] = useChartSize<HTMLDivElement>(trend.renderable);
   const compactLabels = chartWidth > 0 && chartWidth < 470;
   const rows: Row[] = trend.points.map((point) => ({
     ...point,
@@ -236,14 +243,12 @@ export function FreeCashFlowChart({ trend }: { trend: FreeCashFlowTrend }) {
       </Stack>
       {trend.renderable ? (
         <>
-          <Box mt={1}>
-            <ResponsiveContainer
-              width="100%"
-              height={CHART_HEIGHT}
-              onResize={(width) => setChartWidth(width)}
-            >
+          <Box ref={chartElement} mt={1} height={CHART_HEIGHT}>
+            {!deferred && chartWidth > 0 && (
               <BarChart
                 data={rows}
+                width={chartWidth}
+                height={CHART_HEIGHT}
                 margin={{
                   top: compactLabels ? COMPACT_TOP_MARGIN : 25,
                   right: 4,
@@ -302,7 +307,7 @@ export function FreeCashFlowChart({ trend }: { trend: FreeCashFlowTrend }) {
                   ))}
                 </Bar>
               </BarChart>
-            </ResponsiveContainer>
+            )}
           </Box>
           {trend.note && (
             <Typography

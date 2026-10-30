@@ -14,6 +14,7 @@ import {
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { RootState } from '@/store/store';
+import { ScrollRootContext } from './scrollRoot';
 
 const mapStateToProps = (state: RootState) => ({
   stockCode: state.sitePage.stockCode,
@@ -21,6 +22,7 @@ const mapStateToProps = (state: RootState) => ({
 type DefaultLayoutWithStoreProps = DefaultLayoutProps & ReturnType<typeof mapStateToProps>;
 
 class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
+  private scrollRoot = React.createRef<HTMLDivElement>();
   state = {
     analyticsEnabled: localStorage.getItem('investeeExtensionAnalyticsEnabled') !== 'false',
   };
@@ -29,7 +31,7 @@ class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
     // 出典はスクロールする領域の外に置き、窓の下端に常に表示する（重ねると最後の行や操作ボタンを隠す）
     return (
       <Box display="flex" flexDirection="column" height="100%">
-        <Box flex={1} minHeight={0} overflow="auto">
+        <Box ref={this.scrollRoot} flex={1} minHeight={0} overflow="auto">
           <AppBar position="sticky" color="default">
             <Toolbar variant="dense">
               <Grid container size={12} columnSpacing={3} alignItems="center">
@@ -75,7 +77,11 @@ class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
             </Toolbar>
           </AppBar>
 
-          <Box component="main">{this.props.children}</Box>
+          <Box component="main">
+            <ScrollRootContext.Provider value={this.scrollRoot}>
+              {this.props.children}
+            </ScrollRootContext.Provider>
+          </Box>
           <Box px={2} pb={1}>
             <FormControlLabel
               control={

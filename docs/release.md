@@ -84,7 +84,7 @@ gh release view <version>
 
 ### 1. 本番ビルドの実機確認
 
-スキルが作った `dist/` を `chrome://extensions`（デベロッパーモード → パッケージ化されていない拡張機能を読み込む）で読み込み、以下を確認する。前の `dist/` を読み込んだままの場合は、拡張機能のカードの再読み込みボタン（↻）を押してから開く。Chrome の再起動だけでは新しい `dist/` が反映されないことがある（理由と記録されたエラーの消し方は [README の Chrome への読み込み](../README.md#3-chrome-への読み込み)）:
+エージェントが作った `dist/` を `chrome://extensions`（デベロッパーモード → パッケージ化されていない拡張機能を読み込む）で読み込む。前の `dist/` を読み込んだままの場合は、拡張機能のカードの再読み込みボタン（↻）を押してから開く。Chrome の再起動だけでは新しい `dist/` が反映されないことがある（理由と記録されたエラーの消し方は [README の Chrome への読み込み](../README.md#3-chrome-への読み込み)）。読み込んだら次を確認する。
 
 - [ ] 拡張名に `[Dev]` が**付いていない**（本番ビルドであること）
 - [ ] 対応サイトの銘柄ページ（例: `https://kabutan.jp/stock/?code=7203`）で拡張アイコンが有効になる
@@ -94,7 +94,7 @@ gh release view <version>
 
 ### 2. Chrome Web Store へ申請
 
-[Chrome Web Store デベロッパーダッシュボード](https://chrome.google.com/webstore/devconsole) → 対象アイテム → 「パッケージ」→ スキルが作成した zip をアップロード → 審査に提出（ストアアカウントでの手動作業）。
+[Chrome Web Store デベロッパーダッシュボード](https://chrome.google.com/webstore/devconsole) → 対象アイテム → 「パッケージ」→ エージェントが作った zip をアップロード → 審査に提出（ストアアカウントでの手動作業）。
 
 - ダッシュボードの Privacy practices タブでは、manifest の権限ごとに用途説明の入力が必要（[Chrome Web Store のドキュメント](https://developer.chrome.com/docs/webstore/cws-dashboard-privacy)）。`host_permissions` や `permissions` を追加・変更した版を申請する前に、次の用途と入力内容が合っているか確認する
 

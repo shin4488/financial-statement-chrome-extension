@@ -1,39 +1,11 @@
 import { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { ScrollRootContext } from './defaultLayout/scrollRoot';
+import { waitForTurn } from './drawQueue';
 
 // 置いた時点で、スクロールする領域の表示範囲とその下の高さの0.3倍までにある要素は、最初の表示から描く。
 // スクロールで次のフレームに見えてくることがあるため。広げるほど、最初の表示までに描く要素が増える
 const drawAtOnceScreens = 1.3;
-
-// 描く順番を待っている要素
-const waiting: (() => void)[] = [];
-let drawing = false;
-
-function drawNext() {
-  const draw = waiting.shift();
-  if (!draw) {
-    drawing = false;
-    return;
-  }
-  draw();
-  // 描いた要素に続く更新を画面に出してから、次の要素を描く
-  requestAnimationFrame(() => setTimeout(drawNext));
-}
-
-function waitForTurn(draw: () => void) {
-  waiting.push(draw);
-  if (!drawing) {
-    drawing = true;
-    setTimeout(drawNext);
-  }
-  return () => {
-    const index = waiting.indexOf(draw);
-    if (index >= 0) {
-      waiting.splice(index, 1);
-    }
-  };
-}
 
 // 要素の中身を描いてよいかを返す。全要素を一度に描くと、その間は表示が止まるため、
 // スクロールする領域の表示範囲の近くの要素は最初の表示から描き、ほかの要素は置いた順に1フレームに1つずつ描く。

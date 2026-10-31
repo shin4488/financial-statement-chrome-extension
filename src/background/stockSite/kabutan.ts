@@ -9,7 +9,8 @@ export default class Kabutan implements StockSite {
   ) {}
 
   isValid(): boolean {
-    const isStockPage = this.pathname.startsWith('/stock/');
+    // 株探は /stock?code=… でも /stock/?code=… と同じ銘柄ページを返す
+    const isStockPage = this.pathname === '/stock' || this.pathname.startsWith('/stock/');
     const hasStockCode = !StringUtil.isEmpty(this.fetchStockCode());
     return isStockPage && hasStockCode;
   }

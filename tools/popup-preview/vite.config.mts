@@ -49,10 +49,14 @@ export default defineConfig({
             return;
           }
           // 窓の寸法も本体のHTMLを使い、確認用ページだけ違うレイアウトになることを防ぐ。
-          const html = readFileSync(resolve(source, 'popup/popup.html'), 'utf8').replace(
-            './index.tsx',
-            '/popup.tsx',
-          );
+          // Chromeは拡張のページに、本文をOSの標準のフォント・75%の大きさにするスタイルを入れる（同じ指定は本体のスタイルが上書きする）。
+          // httpで開く確認用ページには入らないため、同じスタイルを本体のスタイルより前に入れる。フォント名はOSと表示言語で変わり、ここでは日本語のmacOSの値を使う。
+          const html = readFileSync(resolve(source, 'popup/popup.html'), 'utf8')
+            .replace('./index.tsx', '/popup.tsx')
+            .replace(
+              '<head>',
+              '<head><style>body { font-family: system-ui, "Hiragino Kaku Gothic ProN", sans-serif; font-size: 75%; }</style>',
+            );
           void server
             .transformIndexHtml('/popup.html', html)
             .then((transformed) => {

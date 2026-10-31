@@ -110,7 +110,7 @@ class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
           </Box>
         </Box>
 
-        <Box component="footer" sx={{ opacity: 0.7 }}>
+        <Box component="footer" px={2} sx={{ opacity: 0.7 }}>
           出典:
           <Link
             target="_blank"

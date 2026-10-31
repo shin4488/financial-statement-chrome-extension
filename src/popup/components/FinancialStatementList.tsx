@@ -84,41 +84,55 @@ function FinancialStatementCard({
   );
 }
 
+// background は、表示中のタブが銘柄ページでなければ状態を idle にする。ポップアップは background が確認を終えた状態を受け取ってから描くため、
+// idle は読み込みの前ではなく、表示できるページではないことを表す。失敗した取得は、ポップアップを開いたときにやり直す
+const statusMessages = {
+  idle: 'このページは対応しているサイトの銘柄ページではないため、財務データを表示できません。',
+  loading: '財務データを読み込んでいます。',
+  error: '財務データを取得できませんでした。ポップアップを開き直してお試しください。',
+} as const;
+
+// 状態の文言やデータなしのカードも、年度のカードと同じ左右の余白の中に置く
+function ListArea({ children }: { children: React.ReactNode }) {
+  return (
+    <Grid container spacing={2} paddingX={2}>
+      {children}
+    </Grid>
+  );
+}
+
 class FinancialStatementList extends React.Component<FinancialStatementListWithStoreProps> {
   render(): React.ReactNode {
-    if (
-      this.props.status === 'loading' ||
-      this.props.status === 'idle' ||
-      this.props.status === 'error'
-    ) {
+    const { status } = this.props;
+    if (status === 'loading' || status === 'idle' || status === 'error') {
       return (
-        <p role="status">
-          {this.props.status === 'error'
-            ? '財務データを取得できませんでした。ページを再読み込みしてお試しください。'
-            : '財務データを読み込んでいます。'}
-        </p>
+        <ListArea>
+          <Grid size={12}>
+            <p role="status">{statusMessages[status]}</p>
+          </Grid>
+        </ListArea>
       );
     }
     if (this.props.financialStatementResults.length === 0) {
       return (
-        <Grid size={12}>
-          <Card>
-            <CardHeader subheader="データがありません。決算報告前などデータが未登録の企業は表示できません。"></CardHeader>
-          </Card>
-        </Grid>
+        <ListArea>
+          <Grid size={12}>
+            <Card>
+              <CardHeader subheader="データがありません。決算報告前などデータが未登録の企業は表示できません。"></CardHeader>
+            </Card>
+          </Grid>
+        </ListArea>
       );
     }
 
     return (
-      <>
-        <Grid container spacing={2} paddingX={2}>
-          {this.props.financialStatementResults.map((statement) => (
-            <Grid size={12} key={statement.id}>
-              <FinancialStatementCard statement={statement} isAutoPlay={this.props.isAutoPlay} />
-            </Grid>
-          ))}
-        </Grid>
-      </>
+      <ListArea>
+        {this.props.financialStatementResults.map((statement) => (
+          <Grid size={12} key={statement.id}>
+            <FinancialStatementCard statement={statement} isAutoPlay={this.props.isAutoPlay} />
+          </Grid>
+        ))}
+      </ListArea>
     );
   }
 }

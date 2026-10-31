@@ -33,8 +33,12 @@ function click(name: string) {
   fireEvent.click(screen.getByRole('button', { name }));
 }
 
-function shownSlides() {
-  return screen.getAllByRole('region').map((slide) => slide.getAttribute('aria-label'));
+// フォーカスを受け、支援技術に伝わるスライド。inert の中はどちらからも外れるが、jsdom はその効果を再現しないため、inert の外にあるかで見分ける
+function exposedSlides() {
+  return screen
+    .getAllByRole('region', { hidden: true })
+    .filter((slide) => slide.closest('[inert]') === null)
+    .map((slide) => slide.getAttribute('aria-label'));
 }
 
 function settle() {
@@ -163,16 +167,31 @@ it.each([
   },
 );
 
-it('表示中のスライドだけを見せ、切替中に出ていくスライドも支援技術には伝えない', () => {
+it('表示中のスライドだけを見せ、隠れたスライドは切替中に出ていくものも含めて、フォーカスを受けず支援技術からも隠れる', () => {
   renderCarousel();
-  expect(shownSlides()).toEqual(['BS']);
+  expect(exposedSlides()).toEqual(['BS']);
   expect(screen.getByText('PL')).not.toBeVisible();
   click('Next');
-  expect(shownSlides()).toEqual(['PL']);
+  expect(exposedSlides()).toEqual(['PL']);
   settle();
-  expect(shownSlides()).toEqual(['PL']);
+  expect(exposedSlides()).toEqual(['PL']);
   expect(screen.getByText('PL')).toBeVisible();
   expect(screen.getByText('BS')).not.toBeVisible();
+});
+
+it('フォーカスのある要素を含むスライドが自動切替で隠れると、その要素はフォーカスを受けない状態になり、aria-hidden の中には残らない', () => {
+  render(
+    <AppCarousel isAutoPlay>
+      <button type="button">BS</button>
+      <button type="button">PL</button>
+    </AppCarousel>,
+  );
+  const focused = screen.getByRole('button', { name: 'BS' });
+  focused.focus();
+  advance(5000);
+  // Chrome は、フォーカスのある要素を中に含む aria-hidden を無視して警告する。inert の中の要素からはフォーカスが外れる
+  expect(focused.closest('[inert]')).not.toBeNull();
+  expect(focused.closest('[aria-hidden="true"]')).toBeNull();
 });
 
 it('Tab キーでは、表示中のスライドの中の次に、画面の左右の並びと同じ Previous → Next の順に移り、その後にインジケーターへ移る', async () => {

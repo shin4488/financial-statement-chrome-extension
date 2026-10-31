@@ -2,7 +2,7 @@
   "name": "browser-extension-react-ts-starter",
   "private": true,
   "license": "UNLICENSED",
-  "version": "1.6.6",
+  "version": "1.6.7",
   "scripts": {
     "dev": "run-s clean && vite",
     "preview:popup": "vite --config tools/popup-preview/vite.config.mts",

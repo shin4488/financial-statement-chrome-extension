@@ -44,6 +44,6 @@ GA4 プロパティは `463560127`（investee-extension）。Web 版とは別の
 
 `src/popup/analytics.ts` が `https://investee.info/api/analytics/extension` へ送信し、Rails が GA4 Measurement Protocol へ中継する。秘密キー・測定 ID はサーバだけが管理し、`VITE_GOOGLE_*` は不要。host_permissions の追加も不要。本番ビルドは `ANALYTICS_ENABLED` と package.json 由来のバージョンだけを埋め込む。計測に失敗しても画面を止めず、再試行で件数を増やさない。
 
-サーバ設定・イベント契約・反映時差は [Web リポジトリの運用文書](https://github.com/shin4488/financial-statement/blob/main/docs/analytics/README.md) を参照。Measurement Protocol だけで計測するため、地域・端末・流入・新規/再訪は ブラウザから送信する Web 版と同じ精度では評価しない。拡張ではサイト別の総ユーザー数と操作・結果を中心に見る。
+サーバ設定・イベント契約・反映時差は [Web リポジトリの運用文書](https://github.com/shin4488/financial-statement/blob/main/docs/analytics/README.md) を参照。Measurement Protocol だけで計測するため、地域・端末・流入・新規/再訪は、ブラウザから送信する Web 版と同じ精度では評価しない。拡張ではサイト別の総ユーザー数と操作・結果を中心に見る。
 
 公開前に計測中継 API を先にデプロイし、GA4 のリアルタイムでも受信を確認する。HTTP 204 が返っても、GA4 で集計されたとは限らない。通常レポートへの反映には 24 ～ 48 時間かかる場合があり、新しい計測は過去に遡らない。

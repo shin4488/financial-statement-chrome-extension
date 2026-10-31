@@ -2,10 +2,21 @@ import { allReports, healthyReport, lossReport, scenarios, zeroReport } from './
 import { colorByRole } from '../../src/shared/financialCharts/colorRoles';
 
 describe('表示確認データの会計・API契約', () => {
-  it('正常BSは負債と純資産で資産合計に釣り合い、純資産を透明な空白にしない', () => {
-    const [assets, credit] = healthyReport.balanceSheet.bars;
-    expect(assets.segments.reduce((sum, item) => sum + item.signedAmount, 0)).toBe(1_000_000_000);
-    expect(credit.segments.reduce((sum, item) => sum + item.signedAmount, 0)).toBe(1_000_000_000);
+  it.each(allReports)('$id: BSの資産合計は、空白を除く負債と純資産の合計と等しい', (report) => {
+    if (!report.balanceSheet.renderable) {
+      return;
+    }
+    const [assets, ...credit] = report.balanceSheet.bars;
+    const assetTotal = assets.segments.reduce((sum, item) => sum + item.signedAmount, 0);
+    const creditTotal = credit
+      .flatMap((bar) => bar.segments)
+      .filter((item) => item.colorRole !== 'spacer')
+      .reduce((sum, item) => sum + item.signedAmount, 0);
+    expect(creditTotal).toBe(assetTotal);
+  });
+
+  it('正常BSは純資産を30%で持ち、透明な空白にしない', () => {
+    const credit = healthyReport.balanceSheet.bars[1];
     expect(credit.segments.find((item) => item.colorRole === 'equity')).toMatchObject({
       signedAmount: 300_000_000,
       ratio: 30,
@@ -26,11 +37,9 @@ describe('表示確認データの会計・API契約', () => {
   });
 
   it('損失は描画高を正、実値・比率を負にし、債務超過の空白は資産合計と等しい', () => {
-    const [assets, liabilities, deficit] = lossReport.balanceSheet.bars;
+    const [assets, , deficit] = lossReport.balanceSheet.bars;
     const assetTotal = assets.segments.reduce((sum, item) => sum + item.amount, 0);
-    const liabilityTotal = liabilities.segments.reduce((sum, item) => sum + item.signedAmount, 0);
     const equity = deficit.segments.find((item) => item.colorRole === 'equity');
-    expect(liabilityTotal + (equity?.signedAmount ?? 0)).toBe(assetTotal);
     expect(equity).toMatchObject({ amount: 20_000_000, signedAmount: -20_000_000, ratio: -20 });
     expect(deficit.segments.find((item) => item.colorRole === 'spacer')).toMatchObject({
       amount: assetTotal,

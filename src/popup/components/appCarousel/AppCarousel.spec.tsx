@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AppCarousel from './AppCarousel';
 
@@ -44,10 +44,94 @@ function settle() {
 }
 
 beforeEach(() => {
-  vi.useFakeTimers();
+  vi.useFakeTimers({
+    toFake: [
+      'setTimeout',
+      'clearTimeout',
+      'setInterval',
+      'clearInterval',
+      'requestAnimationFrame',
+      'cancelAnimationFrame',
+    ],
+  });
 });
 afterEach(() => {
+  cleanup();
+  // 作り直す順番待ちの処理を最後まで進め、次のテストに持ち越さない
+  if (vi.isFakeTimers()) {
+    vi.runAllTimers();
+  }
   vi.useRealTimers();
+});
+
+let mounts = 0;
+// 作られるたびに番号が変わるスライド。作り直したかを番号で確かめる
+function NumberedSlide({ name }: { name: string }) {
+  const [id] = React.useState(() => (mounts += 1));
+  return <section aria-label={name}>{`${name}-${id}`}</section>;
+}
+
+// 自動切替で同時に切り替わる2枚のカード
+function renderCards() {
+  render(
+    <>
+      {['1枚目', '2枚目'].map((card) => (
+        <div key={card} data-testid={card}>
+          <AppCarousel isAutoPlay>
+            <NumberedSlide name={`${card}BS`} />
+            <NumberedSlide name={`${card}PL`} />
+          </AppCarousel>
+        </div>
+      ))}
+    </>,
+  );
+}
+
+// スライドの中身。作り直すと番号が変わる
+function slideText(name: string) {
+  return screen.getByLabelText(name).textContent;
+}
+
+function advance(ms: number) {
+  act(() => {
+    vi.advanceTimersByTime(ms);
+  });
+}
+
+// 自動切替で次へ進み、出ていくスライドのアニメーションが終わるまで
+function autoPlayOnce() {
+  advance(5000);
+  advance(100);
+}
+
+it('全カードが同時に切り替わったとき、隠れたスライドは1フレームに1枚ずつ作り直す', () => {
+  renderCards();
+  const before = [slideText('1枚目BS'), slideText('2枚目BS')];
+  autoPlayOnce();
+  advance(0);
+  expect(slideText('1枚目BS')).not.toBe(before[0]);
+  expect(slideText('2枚目BS')).toBe(before[1]);
+  advance(20);
+  expect(slideText('2枚目BS')).not.toBe(before[1]);
+});
+
+it('マウスを重ねているカードは、隠れたスライドを順番を待たずに作り直す', () => {
+  renderCards();
+  const before = slideText('2枚目BS');
+  fireEvent.mouseEnter(screen.getByLabelText('2枚目BS'));
+  autoPlayOnce();
+  expect(slideText('2枚目BS')).not.toBe(before);
+});
+
+it('作り直す順番を待っている隠れたスライドを表示に戻すときは、表示する前に作り直す', () => {
+  renderCards();
+  const before = slideText('2枚目BS');
+  autoPlayOnce();
+  expect(slideText('2枚目BS')).toBe(before);
+  fireEvent.click(
+    within(screen.getByTestId('2枚目')).getByRole('button', { name: 'carousel indicator 1' }),
+  );
+  expect(slideText('2枚目BS')).not.toBe(before);
 });
 
 it.each([

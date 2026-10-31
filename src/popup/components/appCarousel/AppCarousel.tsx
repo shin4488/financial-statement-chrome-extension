@@ -1,7 +1,9 @@
 import React from 'react';
+import { flushSync } from 'react-dom';
 import { Box, IconButton, keyframes } from '@mui/material';
 import { createSvgIcon } from '@mui/material/utils';
 import { trackEvent, EventParams } from '../../analytics';
+import { waitForTurn } from '../drawQueue';
 import { AppCarouselProps } from './props';
 
 const NavigateBefore = createSvgIcon(
@@ -63,6 +65,9 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
   state: AppCarouselState = { active: 0, previous: null, forward: true, generations: [] };
   private autoPlayTimer?: ReturnType<typeof setInterval>;
   private exitTimer?: ReturnType<typeof setTimeout>;
+  // 作り直す順番を待っているスライドと、その順番待ちから外れる処理
+  private pendingResets = new Map<number, () => void>();
+  private hovered = false;
 
   componentDidMount(): void {
     this.autoPlayTimer = setInterval(() => {
@@ -75,6 +80,7 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
   componentWillUnmount(): void {
     clearInterval(this.autoPlayTimer);
     clearTimeout(this.exitTimer);
+    this.pendingResets.forEach((leaveQueue) => leaveQueue());
   }
 
   private get count(): number {
@@ -92,21 +98,55 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
       });
     }
     clearTimeout(this.exitTimer);
-    this.setState((state) => ({
-      active: index,
-      previous: state.active,
-      forward,
-      // 退出中に次の切替が来たら、退出中だったスライドはここで表示から外れる
-      generations:
-        state.previous === index ? state.generations : hide(state.generations, state.previous),
-    }));
-    this.exitTimer = setTimeout(
-      () =>
-        this.setState(({ previous, generations }) => ({
-          previous: null,
-          generations: hide(generations, previous),
-        })),
-      duration,
+    // 作り直す順番を待っているスライドを表示に戻すときは、表示する前に作り直す
+    const leaveQueue = this.pendingResets.get(index);
+    this.pendingResets.delete(index);
+    leaveQueue?.();
+    // 退出中に次の切替が来たら、退出中だったスライドはここで表示から外れる
+    let exiting: number | null = null;
+    this.setState(
+      (state) => {
+        exiting = state.previous === index ? null : state.previous;
+        return {
+          active: index,
+          previous: state.active,
+          forward,
+          generations: leaveQueue ? hide(state.generations, index) : state.generations,
+        };
+      },
+      () => this.resetLater(exiting),
+    );
+    this.exitTimer = setTimeout(() => {
+      let leaving: number | null = null;
+      this.setState(
+        ({ previous }) => {
+          leaving = previous;
+          return { previous: null };
+        },
+        () => this.resetLater(leaving),
+      );
+    }, duration);
+  }
+
+  // 表示から外れたスライドを作り直す。隠れたスライドは見えないため順番を待って作り直し、
+  // 全カードが同時に切り替わる自動切替で、全カードのグラフを一度に作り直さないようにする。
+  // マウスを重ねている間は、隠れたスライドにツールチップが残らないよう、待たずに作り直す
+  private resetLater(index: number | null): void {
+    if (index === null || this.pendingResets.has(index)) {
+      return;
+    }
+    const reset = () =>
+      this.setState(({ generations }) => ({ generations: hide(generations, index) }));
+    if (this.hovered) {
+      reset();
+      return;
+    }
+    this.pendingResets.set(
+      index,
+      waitForTurn(() => {
+        this.pendingResets.delete(index);
+        flushSync(reset);
+      }),
     );
   }
 
@@ -118,7 +158,16 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
     const { active, previous, forward, generations } = this.state;
     const animation = `${duration}ms ease-in-out`;
     return (
-      <Box position="relative" overflow="hidden">
+      <Box
+        position="relative"
+        overflow="hidden"
+        onMouseEnter={() => {
+          this.hovered = true;
+        }}
+        onMouseLeave={() => {
+          this.hovered = false;
+        }}
+      >
         {/* 全スライドを同じセルに重ね、高さを最も高いスライドに揃える。表示中のスライドの高さに合わせると、切替のたびに下端のナビボタンが上下に動き、出ていくスライドがナビ行に重なる */}
         <Box display="grid" gridTemplateColumns="minmax(0, 1fr)">
           {React.Children.map(this.props.children, (child, index) => {

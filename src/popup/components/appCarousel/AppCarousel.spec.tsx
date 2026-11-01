@@ -164,10 +164,44 @@ function renderAutoPlayCarousel() {
   );
 }
 
-it('スライドの中身にマウスを重ねている間は、自動切替を止める', () => {
+// マウスを表示中のBSのスライドの中身に重ねる
+function hoverContent() {
+  const content = screen.getByText('BS');
+  fireEvent.mouseEnter(content);
+  return content;
+}
+
+it('スライドの中身にマウスを重ねたまま2秒たつと、自動切替を止める', () => {
   renderAutoPlayCarousel();
-  fireEvent.mouseEnter(screen.getByText('BS'));
+  hoverContent();
   advance(15000);
+  expect(exposedSlides()).toEqual(['BS']);
+});
+
+it('スライドの中身にマウスを重ねても、2秒たつまでは止めない', () => {
+  renderAutoPlayCarousel();
+  advance(3500);
+  hoverContent();
+  advance(1500);
+  expect(exposedSlides()).toEqual(['PL']);
+});
+
+it('マウスが2秒たたずにスライドの中身から離れたときは、止めずに5秒ごとの切替を続ける', () => {
+  renderAutoPlayCarousel();
+  const content = hoverContent();
+  advance(1900);
+  fireEvent.mouseLeave(content);
+  advance(3100);
+  expect(exposedSlides()).toEqual(['PL']);
+});
+
+it('スライドの中身の上でマウスを動かしても、2秒は最初に重ねたときから数える', () => {
+  renderAutoPlayCarousel();
+  advance(2000);
+  const content = hoverContent();
+  advance(1500);
+  fireEvent.mouseOver(content);
+  advance(1500);
   expect(exposedSlides()).toEqual(['BS']);
 });
 
@@ -197,11 +231,10 @@ it.each([
     leave: (content: HTMLElement) => fireEvent.mouseLeave(content),
   },
 ])(
-  'マウスがスライドの中身から離れると、そこから5秒後に自動切替を再開する（$case）',
+  '止めた後、マウスがスライドの中身から離れると、そこから5秒後に自動切替を再開する（$case）',
   ({ leave }) => {
     renderAutoPlayCarousel();
-    const content = screen.getByText('BS');
-    fireEvent.mouseEnter(content);
+    const content = hoverContent();
     advance(3000);
     leave(content);
     advance(4000);

@@ -171,37 +171,37 @@ function hoverContent() {
   return content;
 }
 
-it('スライドの中身にマウスを重ねたまま2秒たつと、自動切替を止める', () => {
+it('スライドの中身にマウスを重ねたまま3秒たつと、自動切替を止める', () => {
   renderAutoPlayCarousel();
   hoverContent();
   advance(15000);
   expect(exposedSlides()).toEqual(['BS']);
 });
 
-it('スライドの中身にマウスを重ねても、2秒たつまでは止めない', () => {
+it('スライドの中身にマウスを重ねても、3秒たつまでは止めない', () => {
   renderAutoPlayCarousel();
-  advance(3500);
+  advance(2500);
   hoverContent();
-  advance(1500);
+  advance(2500);
   expect(exposedSlides()).toEqual(['PL']);
 });
 
-it('マウスが2秒たたずにスライドの中身から離れたときは、止めずに5秒ごとの切替を続ける', () => {
+it('マウスが3秒たたずにスライドの中身から離れたときは、止めずに5秒ごとの切替を続ける', () => {
   renderAutoPlayCarousel();
   const content = hoverContent();
-  advance(1900);
+  advance(2900);
   fireEvent.mouseLeave(content);
-  advance(3100);
+  advance(2100);
   expect(exposedSlides()).toEqual(['PL']);
 });
 
-it('スライドの中身の上でマウスを動かしても、2秒は最初に重ねたときから数える', () => {
+it('スライドの中身の上でマウスを動かしても、3秒は最初に重ねたときから数える', () => {
   renderAutoPlayCarousel();
-  advance(2000);
+  advance(1500);
   const content = hoverContent();
   advance(1500);
   fireEvent.mouseOver(content);
-  advance(1500);
+  advance(2000);
   expect(exposedSlides()).toEqual(['BS']);
 });
 
@@ -235,7 +235,7 @@ it.each([
   ({ leave }) => {
     renderAutoPlayCarousel();
     const content = hoverContent();
-    advance(3000);
+    advance(3500);
     leave(content);
     advance(4000);
     expect(exposedSlides()).toEqual(['BS']);

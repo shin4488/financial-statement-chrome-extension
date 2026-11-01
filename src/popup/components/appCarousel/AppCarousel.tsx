@@ -21,7 +21,7 @@ const chartTypes: EventParams['chart_type'][] = ['bs', 'pl', 'cf', 'fcf', 'indic
 const interval = 5000;
 const duration = 100;
 // スライドの中身にマウスをこの時間（ms）重ねたままにしたら、自動切替を止める
-const hoverPauseDelay = 2000;
+const hoverPauseDelay = 3000;
 // ナビボタンはカルーセル下端の帯に置かれる。インジケータ行を同じ高さにしないと、ボタンが行からスライド側へはみ出し、幅の狭いポップアップではチャートの下端に重なる
 const navRowHeight = 40;
 const slide = {

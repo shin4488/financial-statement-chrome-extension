@@ -4,6 +4,7 @@ describe('getValidSiteInstance', () => {
   // 対応サイトのホスト名から、そのサイトの銘柄ページの URL の形式で証券コードを読み取る
   test.each([
     'https://kabutan.jp/stock/?code=7203',
+    'https://kabutan.jp/stock?code=7203',
     'https://minkabu.jp/stock/7203',
     'https://finance.yahoo.co.jp/quote/7203.T',
     'https://shikiho.toyokeizai.net/stocks/7203',

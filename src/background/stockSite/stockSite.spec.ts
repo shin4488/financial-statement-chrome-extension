@@ -31,10 +31,14 @@ describe('証券コードの形式', () => {
 describe('Kabutan', () => {
   test.each([
     ['/stock/', 'code=2168', true, '2168'],
+    ['/stock', 'code=2168', true, '2168'], // 末尾のスラッシュがなくても同じ銘柄ページ
     ['/stock/chart', 'code=2168', true, '2168'],
     ['/stock/', 'code=391A', true, '391A'],
     ['/news/', 'code=2168', false, ''],
+    ['/stocks', 'code=2168', false, ''], // /stock で始まる別のパス
+    ['/stockxxx', 'code=2168', false, ''],
     ['/stock/', '', false, ''],
+    ['/stock', '', false, ''],
     ['/stock/', 'code=abc', false, ''], // コード形式でない値は無効
   ])('%s?%s -> valid=%s code=%s', (path, query, valid, code) => {
     const site = new Kabutan(path, sp(query));

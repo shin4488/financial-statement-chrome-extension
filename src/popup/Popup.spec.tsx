@@ -116,6 +116,16 @@ it.each([
   },
 );
 
+it('starts the main area with a level-one heading for screen readers', () => {
+  render(
+    <Provider store={createStore([report])}>
+      <Popup />
+    </Provider>,
+  );
+  const heading = screen.getByRole('heading', { level: 1, name: 'この銘柄の財務諸表' });
+  expect(screen.getByRole('main').firstElementChild).toBe(heading);
+});
+
 it('saves the autoplay change and passes it to the charts without the background', () => {
   const store = createStore([report]);
   // ポップアップの store への dispatch は background へ送られる

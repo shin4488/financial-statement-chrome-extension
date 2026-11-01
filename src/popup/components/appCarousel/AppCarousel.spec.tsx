@@ -108,6 +108,31 @@ function autoPlayOnce() {
   advance(100);
 }
 
+it('切替のボタンは、前後のボタンを「前のグラフ」「次のグラフ」、インジケーターを「1番目のグラフ」〜「3番目のグラフ」という名前で伝える', () => {
+  renderCarousel();
+  const names = ['前のグラフ', '次のグラフ', '1番目のグラフ', '2番目のグラフ', '3番目のグラフ'];
+  // 名前ごとにボタンが1つだけあり、ほかの名前のボタンはない
+  for (const name of names) {
+    screen.getByRole('button', { name });
+  }
+  expect(screen.getAllByRole('button')).toHaveLength(names.length);
+});
+
+it('表示中のスライドのインジケーターだけに aria-current="true" を付け、切り替えると付け替える', () => {
+  renderCarousel();
+  const current = () =>
+    [1, 2, 3].map((n) =>
+      screen.getByRole('button', { name: `${n}番目のグラフ` }).getAttribute('aria-current'),
+    );
+  expect(current()).toEqual(['true', null, null]);
+  click('次のグラフ');
+  expect(current()).toEqual([null, 'true', null]);
+  click('3番目のグラフ');
+  expect(current()).toEqual([null, null, 'true']);
+  click('次のグラフ');
+  expect(current()).toEqual(['true', null, null]);
+});
+
 it('全カードが同時に切り替わったとき、隠れたスライドは1フレームに1枚ずつ作り直す', () => {
   renderCards();
   const before = [slideText('1枚目BS'), slideText('2枚目BS')];
@@ -133,7 +158,7 @@ it('作り直す順番を待っている隠れたスライドを表示に戻す�
   autoPlayOnce();
   expect(slideText('2枚目BS')).toBe(before);
   fireEvent.click(
-    within(screen.getByTestId('2枚目')).getByRole('button', { name: 'carousel indicator 1' }),
+    within(screen.getByTestId('2枚目')).getByRole('button', { name: '1番目のグラフ' }),
   );
   expect(slideText('2枚目BS')).not.toBe(before);
 });
@@ -142,15 +167,15 @@ it.each([
   {
     case: '切替が終わってから戻る',
     leave: () => {
-      click('Next');
+      click('次のグラフ');
       settle();
     },
   },
   {
     case: '退出中にさらに次へ進んでから戻る',
     leave: () => {
-      click('Next');
-      click('Next');
+      click('次のグラフ');
+      click('次のグラフ');
       settle();
     },
   },
@@ -161,7 +186,7 @@ it.each([
     fireEvent.mouseEnter(screen.getByText('BS'));
     expect(screen.getByText('BS（ホバー中）')).toBeVisible();
     leave();
-    click('carousel indicator 1');
+    click('1番目のグラフ');
     settle();
     expect(screen.getByText('BS')).toBeVisible();
   },
@@ -171,7 +196,7 @@ it('表示中のスライドだけを見せ、隠れたスライドは切替中�
   renderCarousel();
   expect(exposedSlides()).toEqual(['BS']);
   expect(screen.getByText('PL')).not.toBeVisible();
-  click('Next');
+  click('次のグラフ');
   expect(exposedSlides()).toEqual(['PL']);
   settle();
   expect(exposedSlides()).toEqual(['PL']);
@@ -194,7 +219,7 @@ it('フォーカスのある要素を含むスライドが自動切替で隠れ�
   expect(focused.closest('[aria-hidden="true"]')).toBeNull();
 });
 
-it('Tab キーでは、表示中のスライドの中の次に、画面の左右の並びと同じ Previous → Next の順に移り、その後にインジケーターへ移る', async () => {
+it('Tab キーでは、表示中のスライドの中の次に、画面の左右の並びと同じ「前のグラフ」→「次のグラフ」の順に移り、その後にインジケーターへ移る', async () => {
   // user-event はタイマーで操作の完了を待つため、このテストでは実時間で動かす
   vi.useRealTimers();
   const user = userEvent.setup();
@@ -216,14 +241,14 @@ it('Tab キーでは、表示中のスライドの中の次に、画面の左右
     return names;
   };
   const navigation = [
-    'Previous',
-    'Next',
-    'carousel indicator 1',
-    'carousel indicator 2',
-    'carousel indicator 3',
+    '前のグラフ',
+    '次のグラフ',
+    '1番目のグラフ',
+    '2番目のグラフ',
+    '3番目のグラフ',
   ];
   expect(await tabOrder()).toEqual(['BS', ...navigation]);
-  await user.click(screen.getByRole('button', { name: 'Next' }));
+  await user.click(screen.getByRole('button', { name: '次のグラフ' }));
   await waitFor(() => expect(screen.getByText('BS')).not.toBeVisible());
   expect(await tabOrder()).toEqual(['PL', ...navigation]);
 });

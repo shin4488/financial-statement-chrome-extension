@@ -91,18 +91,18 @@ it('BS → PL → CF → フリーCF → ROE・ROAの順に切り替わり、前
   expect(screen.getByText('BS表示')).toBeVisible();
   expect(trackEvent).not.toHaveBeenCalled();
   for (const note of ['PL表示', 'CF表示']) {
-    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    fireEvent.click(screen.getByRole('button', { name: '次のグラフ' }));
     settle();
     expect(screen.getByText(note)).toBeVisible();
   }
-  fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+  fireEvent.click(screen.getByRole('button', { name: '次のグラフ' }));
   settle();
   expect(screen.getByLabelText(/2026年：12百万円/)).toBeVisible();
   expect(trackEvent).toHaveBeenLastCalledWith('analysis_interaction', {
     interaction_type: 'chart_navigation',
     chart_type: 'fcf',
   });
-  fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+  fireEvent.click(screen.getByRole('button', { name: '次のグラフ' }));
   settle();
   expect(screen.getByLabelText('ROE：10.0%')).toBeVisible();
   expect(screen.getByLabelText('ROA：4.0%')).toBeVisible();
@@ -111,10 +111,10 @@ it('BS → PL → CF → フリーCF → ROE・ROAの順に切り替わり、前
     chart_type: 'indicators',
   });
   expect(trackEvent).toHaveBeenCalledTimes(4);
-  fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+  fireEvent.click(screen.getByRole('button', { name: '次のグラフ' }));
   settle();
   expect(screen.getByText('BS表示')).toBeVisible();
-  fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
+  fireEvent.click(screen.getByRole('button', { name: '前のグラフ' }));
   settle();
   expect(screen.getByLabelText('ROE：10.0%')).toBeVisible();
 });
@@ -163,7 +163,7 @@ it('枠の幅に合わせて描くグラフ（BS・フリーCF）にも幅が渡
   expect(container).toHaveTextContent(/流動資産:\s*100%/);
   expect(container).toHaveTextContent(/純資産:\s*100%/);
   for (let i = 0; i < 3; i += 1) {
-    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    fireEvent.click(screen.getByRole('button', { name: '次のグラフ' }));
     settle();
   }
   const freeCashFlow = screen.getByRole('region', {
@@ -186,7 +186,7 @@ it('年度ごとのカードに対応する値を表示し、空の取得結果�
       },
     },
   ]);
-  for (const button of screen.getAllByRole('button', { name: 'carousel indicator 5' })) {
+  for (const button of screen.getAllByRole('button', { name: '5番目のグラフ' })) {
     fireEvent.click(button);
     settle();
   }

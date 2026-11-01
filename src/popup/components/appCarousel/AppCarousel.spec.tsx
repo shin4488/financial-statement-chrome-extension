@@ -147,10 +147,102 @@ it('全カードが同時に切り替わったとき、隠れたスライドは1
 it('マウスを重ねているカードは、隠れたスライドを順番を待たずに作り直す', () => {
   renderCards();
   const before = slideText('2枚目BS');
-  fireEvent.mouseEnter(screen.getByLabelText('2枚目BS'));
+  fireEvent.mouseEnter(
+    within(screen.getByTestId('2枚目')).getByRole('button', { name: '次のグラフ' }),
+  );
   autoPlayOnce();
   expect(slideText('2枚目BS')).not.toBe(before);
 });
+
+function renderAutoPlayCarousel() {
+  render(
+    <AppCarousel isAutoPlay>
+      <section aria-label="BS">BS</section>
+      <section aria-label="PL">PL</section>
+      <section aria-label="CF">CF</section>
+    </AppCarousel>,
+  );
+}
+
+// マウスを表示中のBSのスライドの中身に重ねる
+function hoverContent() {
+  const content = screen.getByText('BS');
+  fireEvent.mouseEnter(content);
+  return content;
+}
+
+it('スライドの中身にマウスを重ねたまま3秒たつと、自動切替を止める', () => {
+  renderAutoPlayCarousel();
+  hoverContent();
+  advance(15000);
+  expect(exposedSlides()).toEqual(['BS']);
+});
+
+it('スライドの中身にマウスを重ねても、3秒たつまでは止めない', () => {
+  renderAutoPlayCarousel();
+  advance(2500);
+  hoverContent();
+  advance(2500);
+  expect(exposedSlides()).toEqual(['PL']);
+});
+
+it('マウスが3秒たたずにスライドの中身から離れたときは、止めずに5秒ごとの切替を続ける', () => {
+  renderAutoPlayCarousel();
+  const content = hoverContent();
+  advance(2900);
+  fireEvent.mouseLeave(content);
+  advance(2100);
+  expect(exposedSlides()).toEqual(['PL']);
+});
+
+it('スライドの中身の上でマウスを動かしても、3秒は最初に重ねたときから数える', () => {
+  renderAutoPlayCarousel();
+  advance(1500);
+  const content = hoverContent();
+  advance(1500);
+  fireEvent.mouseOver(content);
+  advance(2000);
+  expect(exposedSlides()).toEqual(['BS']);
+});
+
+it.each([
+  {
+    case: 'スライドの余白',
+    target: () => screen.getByText('BS').parentElement as HTMLElement,
+  },
+  {
+    case: '切替のボタン',
+    target: () => screen.getByRole('button', { name: '次のグラフ' }),
+  },
+])('$caseにマウスを重ねているだけでは、自動切替を止めない', ({ target }) => {
+  renderAutoPlayCarousel();
+  fireEvent.mouseEnter(target());
+  advance(5000);
+  expect(exposedSlides()).toEqual(['PL']);
+});
+
+it.each([
+  {
+    case: 'スライドの余白へ移る',
+    leave: (content: HTMLElement) => fireEvent.mouseOver(content.parentElement as HTMLElement),
+  },
+  {
+    case: 'カルーセルの外へ出る',
+    leave: (content: HTMLElement) => fireEvent.mouseLeave(content),
+  },
+])(
+  '止めた後、マウスがスライドの中身から離れると、そこから5秒後に自動切替を再開する（$case）',
+  ({ leave }) => {
+    renderAutoPlayCarousel();
+    const content = hoverContent();
+    advance(3500);
+    leave(content);
+    advance(4000);
+    expect(exposedSlides()).toEqual(['BS']);
+    advance(1000);
+    expect(exposedSlides()).toEqual(['PL']);
+  },
+);
 
 it('作り直す順番を待っている隠れたスライドを表示に戻すときは、表示する前に作り直す', () => {
   renderCards();

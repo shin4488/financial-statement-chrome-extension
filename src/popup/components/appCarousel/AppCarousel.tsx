@@ -20,6 +20,8 @@ const Dot = createSvgIcon(<circle cx="12" cy="12" r="8" />, 'FiberManualRecord')
 const chartTypes: EventParams['chart_type'][] = ['bs', 'pl', 'cf', 'fcf', 'indicators'];
 const interval = 5000;
 const duration = 100;
+// スライドの中身にマウスをこの時間（ms）重ねたままにしたら、自動切替を止める
+const hoverPauseDelay = 3000;
 // ナビボタンはカルーセル下端の帯に置かれる。インジケータ行を同じ高さにしないと、ボタンが行からスライド側へはみ出し、幅の狭いポップアップではチャートの下端に重なる
 const navRowHeight = 40;
 const slide = {
@@ -68,8 +70,16 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
   // 作り直す順番を待っているスライドと、その順番待ちから外れる処理
   private pendingResets = new Map<number, () => void>();
   private hovered = false;
+  private hoveringContent = false;
+  private hoverTimer?: ReturnType<typeof setTimeout>;
+  private autoPlayPaused = false;
 
   componentDidMount(): void {
+    this.startAutoPlay();
+  }
+
+  private startAutoPlay(): void {
+    clearInterval(this.autoPlayTimer);
     this.autoPlayTimer = setInterval(() => {
       if (this.props.isAutoPlay) {
         this.move(1);
@@ -77,9 +87,31 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
     }, interval);
   }
 
+  // スライドの中身（グラフや指標）にマウスを重ねたまま一定の時間がたったら、離すまで自動切替を止める。スライドの余白や切替のボタンに重ねているだけでは止めない。
+  // ポップアップではマウスがほぼ常にいずれかのカードの上にあるため、カルーセル全体で止めると、そのカードが切り替わらなくなる。
+  // 重ねてすぐには止めず、スクロールする途中でマウスがグラフの上を通っただけのカードは切り替わり続けるようにする。
+  // 中身の上でマウスを動かしても、時間は最初に重ねたときから数える。再開するときは間隔を数え直し、マウスが離れた直後に切り替わらないようにする
+  private hoverContent(hovering: boolean): void {
+    if (hovering === this.hoveringContent) {
+      return;
+    }
+    this.hoveringContent = hovering;
+    clearTimeout(this.hoverTimer);
+    if (hovering) {
+      this.hoverTimer = setTimeout(() => {
+        this.autoPlayPaused = true;
+        clearInterval(this.autoPlayTimer);
+      }, hoverPauseDelay);
+    } else if (this.autoPlayPaused) {
+      this.autoPlayPaused = false;
+      this.startAutoPlay();
+    }
+  }
+
   componentWillUnmount(): void {
     clearInterval(this.autoPlayTimer);
     clearTimeout(this.exitTimer);
+    clearTimeout(this.hoverTimer);
     this.pendingResets.forEach((leaveQueue) => leaveQueue());
   }
 
@@ -184,6 +216,9 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
                 // 隠れたスライドは、切替中に出ていくスライドも含めて、フォーカスを受けず支援技術からも隠れるようにする。
                 // aria-hidden では中のフォーカスが残り、Chrome は警告を出して aria-hidden を無視する
                 inert={index !== active}
+                // 中身の外の余白に移ったときは、このBox自身がイベントの対象になる
+                onMouseOver={(event) => this.hoverContent(event.target !== event.currentTarget)}
+                onMouseLeave={() => this.hoverContent(false)}
                 sx={{
                   gridArea: '1 / 1',
                   visibility: index === active || leaving ? undefined : 'hidden',

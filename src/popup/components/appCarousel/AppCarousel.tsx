@@ -181,7 +181,9 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
             return (
               <Box
                 key={generations[index] ?? 0}
-                aria-hidden={index === active ? undefined : true}
+                // 隠れたスライドは、切替中に出ていくスライドも含めて、フォーカスを受けず支援技術からも隠れるようにする。
+                // aria-hidden では中のフォーカスが残り、Chrome は警告を出して aria-hidden を無視する
+                inert={index !== active}
                 sx={{
                   gridArea: '1 / 1',
                   visibility: index === active || leaving ? undefined : 'hidden',

@@ -5,7 +5,7 @@ import { Provider } from 'react-redux';
 import FinancialStatementList from './FinancialStatementList';
 import { trackEvent } from '../analytics';
 vi.mock('../analytics', () => ({ trackEvent: vi.fn() }));
-import financialStatement, { setResult } from '@/store/slices/financialStatement';
+import financialStatement, { setResult, setStatus } from '@/store/slices/financialStatement';
 import sitePage from '@/store/slices/sitePageSlice';
 import type { FinancialStatementResult } from '@/background/financialStatement/result';
 
@@ -197,6 +197,36 @@ it('年度ごとのカードに対応する値を表示し、空の取得結果�
   });
   expect(screen.getByText(/データがありません/)).toBeVisible();
   expect(screen.queryByRole('region', { name: 'ROE・ROA' })).toBeNull();
+});
+
+it('表示中のタブが銘柄ページでないとき（idle）は、読み込み中ではなく、財務データを表示できないことを伝える', () => {
+  const store = configureStore({ reducer: { financialStatement, sitePage } });
+  store.dispatch(setStatus('idle'));
+  render(
+    <Provider store={store}>
+      <FinancialStatementList isAutoPlay={false} />
+    </Provider>,
+  );
+  expect(screen.getByRole('status')).toHaveTextContent(
+    'このページは対応しているサイトの銘柄ページではないため、財務データを表示できません。',
+  );
+});
+
+it('読み込み中と取得の失敗はそれぞれの文言で伝え、失敗したときはポップアップを開き直すよう案内する', () => {
+  const store = configureStore({ reducer: { financialStatement, sitePage } });
+  store.dispatch(setStatus('loading'));
+  render(
+    <Provider store={store}>
+      <FinancialStatementList isAutoPlay={false} />
+    </Provider>,
+  );
+  expect(screen.getByRole('status')).toHaveTextContent('財務データを読み込んでいます。');
+  act(() => {
+    store.dispatch(setStatus('error'));
+  });
+  expect(screen.getByRole('status')).toHaveTextContent(
+    '財務データを取得できませんでした。ポップアップを開き直してお試しください。',
+  );
 });
 
 it('見えていない年度のカードは、見えているカードの後に1枚ずつ描き、見えてきたカードは順番を待たずに描く', () => {

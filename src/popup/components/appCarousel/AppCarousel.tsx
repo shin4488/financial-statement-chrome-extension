@@ -196,14 +196,14 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
           })}
         </Box>
         <IconButton
-          aria-label="Previous"
+          aria-label="前のグラフ"
           onClick={() => this.move(-1, true)}
           sx={{ ...navButtonSx, left: 0 }}
         >
           <NavigateBefore />
         </IconButton>
         <IconButton
-          aria-label="Next"
+          aria-label="次のグラフ"
           onClick={() => this.move(1, true)}
           sx={{ ...navButtonSx, right: 0 }}
         >
@@ -213,7 +213,8 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
           {Array.from({ length: this.count }, (_, index) => (
             <IconButton
               key={index}
-              aria-label={`carousel indicator ${index + 1}`}
+              aria-label={`${index + 1}番目のグラフ`}
+              aria-current={index === active ? 'true' : undefined}
               onClick={() => this.show(index, index > active, true)}
               sx={{
                 p: 0,

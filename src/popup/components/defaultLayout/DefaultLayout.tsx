@@ -78,6 +78,8 @@ class DefaultLayout extends React.Component<DefaultLayoutWithStoreProps> {
           </AppBar>
 
           <Box component="main">
+            {/* ポップアップは見出しを表示しないため、スクリーンリーダーで見出しから移動できるよう、見えない h1 を置く。sr-only は global.css が読み込む Tailwind のクラス */}
+            <h1 className="sr-only">この銘柄の財務諸表</h1>
             <ScrollRootContext.Provider value={this.scrollRoot}>
               {this.props.children}
             </ScrollRootContext.Provider>

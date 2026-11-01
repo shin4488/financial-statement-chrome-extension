@@ -147,10 +147,69 @@ it('全カードが同時に切り替わったとき、隠れたスライドは1
 it('マウスを重ねているカードは、隠れたスライドを順番を待たずに作り直す', () => {
   renderCards();
   const before = slideText('2枚目BS');
-  fireEvent.mouseEnter(screen.getByLabelText('2枚目BS'));
+  fireEvent.mouseEnter(
+    within(screen.getByTestId('2枚目')).getByRole('button', { name: '次のグラフ' }),
+  );
   autoPlayOnce();
   expect(slideText('2枚目BS')).not.toBe(before);
 });
+
+function renderAutoPlayCarousel() {
+  render(
+    <AppCarousel isAutoPlay>
+      <section aria-label="BS">BS</section>
+      <section aria-label="PL">PL</section>
+      <section aria-label="CF">CF</section>
+    </AppCarousel>,
+  );
+}
+
+it('スライドの中身にマウスを重ねている間は、自動切替を止める', () => {
+  renderAutoPlayCarousel();
+  fireEvent.mouseEnter(screen.getByText('BS'));
+  advance(15000);
+  expect(exposedSlides()).toEqual(['BS']);
+});
+
+it.each([
+  {
+    case: 'スライドの余白',
+    target: () => screen.getByText('BS').parentElement as HTMLElement,
+  },
+  {
+    case: '切替のボタン',
+    target: () => screen.getByRole('button', { name: '次のグラフ' }),
+  },
+])('$caseにマウスを重ねているだけでは、自動切替を止めない', ({ target }) => {
+  renderAutoPlayCarousel();
+  fireEvent.mouseEnter(target());
+  advance(5000);
+  expect(exposedSlides()).toEqual(['PL']);
+});
+
+it.each([
+  {
+    case: 'スライドの余白へ移る',
+    leave: (content: HTMLElement) => fireEvent.mouseOver(content.parentElement as HTMLElement),
+  },
+  {
+    case: 'カルーセルの外へ出る',
+    leave: (content: HTMLElement) => fireEvent.mouseLeave(content),
+  },
+])(
+  'マウスがスライドの中身から離れると、そこから5秒後に自動切替を再開する（$case）',
+  ({ leave }) => {
+    renderAutoPlayCarousel();
+    const content = screen.getByText('BS');
+    fireEvent.mouseEnter(content);
+    advance(3000);
+    leave(content);
+    advance(4000);
+    expect(exposedSlides()).toEqual(['BS']);
+    advance(1000);
+    expect(exposedSlides()).toEqual(['PL']);
+  },
+);
 
 it('作り直す順番を待っている隠れたスライドを表示に戻すときは、表示する前に作り直す', () => {
   renderCards();

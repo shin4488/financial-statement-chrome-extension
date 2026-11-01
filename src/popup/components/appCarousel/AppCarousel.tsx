@@ -68,13 +68,34 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
   // 作り直す順番を待っているスライドと、その順番待ちから外れる処理
   private pendingResets = new Map<number, () => void>();
   private hovered = false;
+  private contentHovered = false;
 
   componentDidMount(): void {
+    this.startAutoPlay();
+  }
+
+  private startAutoPlay(): void {
+    clearInterval(this.autoPlayTimer);
     this.autoPlayTimer = setInterval(() => {
       if (this.props.isAutoPlay) {
         this.move(1);
       }
     }, interval);
+  }
+
+  // スライドの中身（グラフや指標）にマウスを重ねている間は、自動切替を止める。スライドの余白や切替のボタンに重ねているだけでは止めない。
+  // ポップアップではマウスがほぼ常にいずれかのカードの上にあるため、カルーセル全体で止めると、そのカードが切り替わらなくなる。
+  // 再開するときは間隔を数え直し、マウスが離れた直後に切り替わらないようにする
+  private pauseAutoPlay(paused: boolean): void {
+    if (paused === this.contentHovered) {
+      return;
+    }
+    this.contentHovered = paused;
+    if (paused) {
+      clearInterval(this.autoPlayTimer);
+    } else {
+      this.startAutoPlay();
+    }
   }
 
   componentWillUnmount(): void {
@@ -184,6 +205,9 @@ export default class AppCarousel extends React.Component<AppCarouselProps, AppCa
                 // 隠れたスライドは、切替中に出ていくスライドも含めて、フォーカスを受けず支援技術からも隠れるようにする。
                 // aria-hidden では中のフォーカスが残り、Chrome は警告を出して aria-hidden を無視する
                 inert={index !== active}
+                // 中身の外の余白に移ったときは、このBox自身がイベントの対象になる
+                onMouseOver={(event) => this.pauseAutoPlay(event.target !== event.currentTarget)}
+                onMouseLeave={() => this.pauseAutoPlay(false)}
                 sx={{
                   gridArea: '1 / 1',
                   visibility: index === active || leaving ? undefined : 'hidden',
